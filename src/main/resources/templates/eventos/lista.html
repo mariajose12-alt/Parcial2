@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos Disponibles - Eventos PUCMM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!--<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">-->
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div th:replace="~{fragments/navbar :: navbar(${usuario})}"></div>
+
+<div class="container mt-4 mb-5">
+
+    <!-- Toast -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="toastFeedback" class="toast align-items-center text-white border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold" id="toastMensaje"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-calendar3"></i> Eventos Disponibles</h2>
+        <!-- Toggle vista -->
+        <div class="btn-group" role="group">
+            <button class="btn btn-dark btn-sm active" id="btnVistaTarjetas" onclick="cambiarVista('tarjetas')">
+                <i class="bi bi-grid-3x3-gap"></i> Tarjetas
+            </button>
+            <button class="btn btn-outline-dark btn-sm" id="btnVistaCalendario" onclick="cambiarVista('calendario')">
+                <i class="bi bi-calendar-week"></i> Calendario
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Buscar</label>
+                    <input type="text" class="form-control form-control-sm" id="filtroBusqueda"
+                           placeholder="Título o lugar..." oninput="filtrarEventos()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Desde</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroDesde" onchange="filtrarEventos()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Hasta</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroHasta" onchange="filtrarEventos()">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="limpiarFiltros()">
+                        <i class="bi bi-x-lg"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista tarjetas -->
+    <div id="vistaTarjetas">
+        <div th:if="${not #lists.isEmpty(eventos)}"
+             class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="contenedorEventos">
+            <div class="col evento-item"
+                 th:each="evento : ${eventos}"
+                 th:data-titulo="${evento.titulo}"
+                 th:data-lugar="${evento.lugar}"
+                 th:data-fecha="${evento.fechaParaInput}">
+                <div class="card evento-card shadow-sm h-100">
+                    <div class="card-header bg-dark text-white">
+                        <span class="badge bg-success float-end">PUBLICADO</span>
+                        <h6 class="mb-0 text-truncate" th:text="${evento.titulo}"></h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-calendar-event"></i>
+                            <span th:text="${evento.fechaFormateada}"></span>
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-geo-alt"></i> <span th:text="${evento.lugar}"></span>
+                        </p>
+                        <p class="card-text small" th:text="${#strings.abbreviate(evento.descripcion, 100)}"></p>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span><i class="bi bi-people"></i> Cupo</span>
+                                <span>
+                                    <span th:text="${evento.inscritosActuales}"></span> /
+                                    <span th:text="${evento.capacidadMax}"></span>
+                                </span>
+                            </div>
+                            <div class="progress cupo-bar">
+                                <div class="progress-bar bg-dark"
+                                     th:style="'width: ' + ${evento.capacidadMax > 0 ? (evento.inscritosActuales * 100 / evento.capacidadMax) : 0} + '%'">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <button th:if="${usuario.rol.name() == 'PARTICIPANTE' and evento.inscritosActuales < evento.capacidadMax}"
+                                class="btn btn-dark w-100 btn-inscribir"
+                                th:data-id="${evento.id}">
+                            <i class="bi bi-plus-circle"></i> Inscribirse
+                        </button>
+                        <a th:if="${usuario.rol.name() == 'ORGANIZADOR' or usuario.rol.name() == 'ADMINISTRADOR'}"
+                           href="/organizador/eventos"
+                           class="btn btn-warning w-100">
+                            <i class="bi bi-gear"></i> Administrar
+                        </a>
+                        <button th:if="${usuario.rol.name() == 'PARTICIPANTE' and evento.inscritosActuales >= evento.capacidadMax}"
+                                class="btn btn-secondary w-100" disabled>
+                            <i class="bi bi-x-circle"></i> Sin cupo disponible
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sinResultados" class="text-center py-5" style="display:none!important;">
+            <i class="bi bi-search fs-1 text-muted"></i>
+            <p class="text-muted mt-3">No se encontraron eventos con esos filtros.</p>
+        </div>
+
+        <div th:if="${#lists.isEmpty(eventos)}" class="text-center py-5">
+            <i class="bi bi-calendar-x fs-1 text-muted"></i>
+            <p class="text-muted mt-3">No hay eventos disponibles en este momento.</p>
+        </div>
+    </div>
+
+    <!-- Vista calendario -->
+    <div id="vistaCalendario" style="display:none;">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div id="calendario"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal detalle evento desde calendario -->
+    <div class="modal fade" id="modalEvento" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="modalTitulo"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><i class="bi bi-geo-alt"></i> <span id="modalLugar"></span></p>
+                    <p><i class="bi bi-calendar-event"></i> <span id="modalFecha"></span></p>
+                    <p><i class="bi bi-text-paragraph"></i> <span id="modalDescripcion"></span></p>
+                    <p><i class="bi bi-people"></i> Cupo: <span id="modalCupo"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-dark btn-sm" id="modalBtnInscribir">
+                        <i class="bi bi-plus-circle"></i> Inscribirse
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer class="bg-dark text-light text-center py-3 mt-auto">
+    <small>© 2025 PUCMM - Sistema de Gestión de Eventos Académicos</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="/js/darkmode.js"></script>
+<script th:inline="javascript">
+    // Datos de eventos desde Thymeleaf
+    const eventosCalendario = [
+        /*[# th:each="e : ${eventos}"]*/
+        {
+            id: /*[[${e.id}]]*/ 0,
+            title: /*[[${e.titulo}]]*/ '',
+            start: /*[[${e.fechaParaInput}]]*/ '',
+            extendedProps: {
+                lugar: /*[[${e.lugar}]]*/ '',
+                descripcion: /*[[${e.descripcion}]]*/ '',
+                inscritosActuales: /*[[${e.inscritosActuales}]]*/ 0,
+                capacidadMax: /*[[${e.capacidadMax}]]*/ 0
+            }
+        },
+        /*[/]*/
+    ];
+
+    let calendario = null;
+
+    function cambiarVista(vista) {
+        const tarjetas = document.getElementById('vistaTarjetas');
+        const cal = document.getElementById('vistaCalendario');
+        const btnTarjetas = document.getElementById('btnVistaTarjetas');
+        const btnCal = document.getElementById('btnVistaCalendario');
+
+        if (vista === 'tarjetas') {
+            tarjetas.style.display = '';
+            cal.style.display = 'none';
+            btnTarjetas.classList.add('active');
+            btnTarjetas.classList.replace('btn-outline-dark', 'btn-dark');
+            btnCal.classList.remove('active');
+            btnCal.classList.replace('btn-dark', 'btn-outline-dark');
+            localStorage.setItem('vistaEventos', 'tarjetas');
+        } else {
+            tarjetas.style.display = 'none';
+            cal.style.display = '';
+            btnTarjetas.classList.remove('active');
+            btnTarjetas.classList.replace('btn-dark', 'btn-outline-dark');
+            btnCal.classList.add('active');
+            btnCal.classList.replace('btn-outline-dark', 'btn-dark');
+            localStorage.setItem('vistaEventos', 'calendario');
+
+            if (!calendario) {
+                calendario = new FullCalendar.Calendar(document.getElementById('calendario'), {
+                    initialView: 'dayGridMonth',
+                    locale: 'es',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    },
+                    events: eventosCalendario,
+                    eventColor: '#212529',
+                    eventClick: function(info) {
+                        const props = info.event.extendedProps;
+                        document.getElementById('modalTitulo').textContent = info.event.title;
+                        document.getElementById('modalLugar').textContent = props.lugar;
+                        document.getElementById('modalFecha').textContent = info.event.start.toLocaleString('es-DO');
+                        document.getElementById('modalDescripcion').textContent = props.descripcion;
+                        document.getElementById('modalCupo').textContent = props.inscritosActuales + ' / ' + props.capacidadMax;
+
+                        const btnInscribir = document.getElementById('modalBtnInscribir');
+                        const esParticipante = /*[[${usuario.rol.name() == 'PARTICIPANTE'}]]*/ false;
+                        if (esParticipante && props.inscritosActuales < props.capacidadMax) {
+                            btnInscribir.style.display = '';
+                            btnInscribir.onclick = () => {
+                                inscribirse(info.event.id, btnInscribir);
+                                bootstrap.Modal.getInstance(document.getElementById('modalEvento')).hide();
+                            };
+                        } else {
+                            btnInscribir.style.display = 'none';
+                        }
+
+                        new bootstrap.Modal(document.getElementById('modalEvento')).show();
+                    }
+                });
+                calendario.render();
+            }
+        }
+    }
+
+    function filtrarEventos() {
+        const busqueda = document.getElementById('filtroBusqueda').value.toLowerCase();
+        const desde = document.getElementById('filtroDesde').value;
+        const hasta = document.getElementById('filtroHasta').value;
+
+        const items = document.querySelectorAll('.evento-item');
+        let visibles = 0;
+
+        items.forEach(item => {
+            const titulo = item.dataset.titulo.toLowerCase();
+            const lugar = item.dataset.lugar.toLowerCase();
+            const fecha = item.dataset.fecha;
+
+            const coincideBusqueda = !busqueda || titulo.includes(busqueda) || lugar.includes(busqueda);
+            const coincideDesde = !desde || fecha >= desde;
+            const coincideHasta = !hasta || fecha <= hasta;
+
+            const visible = coincideBusqueda && coincideDesde && coincideHasta;
+            item.style.display = visible ? '' : 'none';
+            if (visible) visibles++;
+        });
+
+        document.getElementById('sinResultados').style.display = visibles === 0 ? 'block' : 'none';
+    }
+
+    function limpiarFiltros() {
+        document.getElementById('filtroBusqueda').value = '';
+        document.getElementById('filtroDesde').value = '';
+        document.getElementById('filtroHasta').value = '';
+        filtrarEventos();
+    }
+
+    function mostrarToast(mensaje, exito) {
+        const toast = document.getElementById('toastFeedback');
+        const msg = document.getElementById('toastMensaje');
+        toast.classList.remove('bg-success', 'bg-danger');
+        toast.classList.add(exito ? 'bg-success' : 'bg-danger');
+        msg.textContent = mensaje;
+        new bootstrap.Toast(toast, { delay: 3500 }).show();
+    }
+
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-inscribir');
+        if (!btn) return;
+        inscribirse(btn.dataset.id, btn);
+    });
+
+    function inscribirse(eventoId, btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Procesando...';
+        fetch('/api/eventos/' + eventoId + '/inscribir', {
+            method: 'POST',
+            credentials: 'same-origin'
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (res.ok) {
+                    mostrarToast(data.mensaje || '¡Inscripción exitosa!', true);
+                    const footer = btn.closest('.card-footer');
+                    if (footer) {
+                        footer.innerHTML = '<button class="btn btn-outline-success w-100" disabled>' +
+                            '<i class="bi bi-check-circle"></i> Inscrito</button>';
+                    }
+                } else {
+                    mostrarToast(data.error || 'Error al inscribirse', false);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-plus-circle"></i> Inscribirse';
+                }
+            })
+            .catch(() => {
+                mostrarToast('Error de conexión', false);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-plus-circle"></i> Inscribirse';
+            });
+    }
+
+    // Restaurar vista preferida
+    document.addEventListener('DOMContentLoaded', () => {
+        const vistaGuardada = localStorage.getItem('vistaEventos');
+        if (vistaGuardada === 'calendario') cambiarVista('calendario');
+    });
+</script>
+</body>
+</html>

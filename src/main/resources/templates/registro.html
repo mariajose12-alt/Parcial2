@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Eventos PUCMM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="bi bi-calendar-event-fill text-warning"></i> Eventos PUCMM
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4 mb-5">
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-person-plus-fill text-warning fs-1"></i>
+                        <h4 class="fw-bold mt-2">Crear cuenta</h4>
+                        <p class="text-muted small">Regístrate para acceder a los eventos</p>
+                    </div>
+
+                    <form id="registroForm" action="/registro" method="post" novalidate>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Nombre</label>
+                                <input type="text" class="form-control" name="nombre"
+                                       placeholder="Tu nombre" required minlength="2">
+                                <div class="invalid-feedback">Ingresa tu nombre.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Apellido</label>
+                                <input type="text" class="form-control" name="apellido"
+                                       placeholder="Tu apellido" required minlength="2">
+                                <div class="invalid-feedback">Ingresa tu apellido.</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Correo electrónico</label>
+                            <input type="email" class="form-control" name="email"
+                                   placeholder="correo@ejemplo.com" required>
+                            <div class="invalid-feedback">Ingresa un correo válido.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Contraseña</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password"
+                                       id="passwordInput" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">Mínimo 6 caracteres.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Confirmar contraseña</label>
+                            <input type="password" class="form-control" name="confirmarPassword"
+                                   id="confirmarPassword">
+                            <div class="invalid-feedback" id="passwordError">Las contraseñas no coinciden.</div>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-dark btn-lg">
+                                <i class="bi bi-person-check"></i> Registrarse
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+                    <p class="text-center text-muted small mb-0">
+                        ¿Ya tienes cuenta?
+                        <a href="/login" class="text-decoration-none fw-semibold">Inicia sesión</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-light text-center py-3 mt-auto">
+    <small>© 2025 PUCMM - Sistema de Gestión de Eventos Académicos</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('registroForm').addEventListener('submit', function (e) {
+        const pass = document.getElementById('passwordInput').value;
+        const confirm = document.getElementById('confirmarPassword').value;
+
+        if (pass.length < 6) {
+            e.preventDefault();
+            document.getElementById('passwordInput').classList.add('is-invalid');
+            document.querySelector('#passwordInput ~ .invalid-feedback') &&
+            (document.querySelector('#passwordInput').nextElementSibling.nextElementSibling.textContent = 'Mínimo 6 caracteres.');
+        } else {
+            document.getElementById('passwordInput').classList.remove('is-invalid');
+        }
+
+        if (pass !== confirm) {
+            e.preventDefault();
+            document.getElementById('confirmarPassword').classList.add('is-invalid');
+            document.getElementById('passwordError').textContent = 'Las contraseñas no coinciden.';
+        } else if (pass.length >= 6) {
+            document.getElementById('confirmarPassword').classList.remove('is-invalid');
+        }
+
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        this.classList.add('was-validated');
+    });
+
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const input = document.getElementById('passwordInput');
+        const icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+</script>
+</body>
+</html>

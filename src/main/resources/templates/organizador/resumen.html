@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen del Evento - Eventos PUCMM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div th:replace="~{fragments/navbar :: navbar(${usuario})}"></div>
+
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-bar-chart"></i> Resumen del Evento</h2>
+        <a href="/organizador/eventos" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- Skeleton / loading state -->
+    <div id="loadingState" class="row g-4 mb-4">
+        <div class="col-md-4" th:each="i : ${#numbers.sequence(1, 3)}">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="placeholder-glow">
+                        <span class="placeholder col-4 mb-2 d-block mx-auto" style="height:40px"></span>
+                        <span class="placeholder col-6"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats cards (hidden until loaded) -->
+    <div id="statsCards" class="row g-4 mb-4" style="display:none!important">
+        <div class="col-md-4">
+            <div class="card stat-card inscritos shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-people fs-2 text-primary mb-2"></i>
+                    <div class="stat-number text-primary" id="totalInscritos">0</div>
+                    <p class="text-muted mb-0 mt-1">Total Inscritos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card asistentes shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-person-check fs-2 text-success mb-2"></i>
+                    <div class="stat-number text-success" id="totalAsistentes">0</div>
+                    <p class="text-muted mb-0 mt-1">Total Asistentes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card porcentaje shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-percent fs-2 text-warning mb-2"></i>
+                    <div class="stat-number text-warning" id="porcentajeAsistencia">0%</div>
+                    <p class="text-muted mb-0 mt-1">Porcentaje Asistencia</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chartsSection" class="row g-4" style="display:none!important">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-line"></i> Inscripciones por día</h6>
+                    <canvas id="graficoRegistros"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-graph-up"></i> Asistencia por hora</h6>
+                    <canvas id="graficoAsistencia"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorState" class="alert alert-danger d-none">
+        <i class="bi bi-exclamation-triangle-fill"></i> No se pudieron cargar las estadísticas.
+        <button class="btn btn-sm btn-outline-danger ms-2" onclick="cargarEstadisticas()">Reintentar</button>
+    </div>
+
+</div>
+
+<footer class="bg-dark text-light text-center py-3 mt-auto">
+    <small>© 2025 PUCMM - Sistema de Gestión de Eventos Académicos</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    const eventoId = /*[[${eventoId}]]*/ null;
+    let chartRegistros = null;
+    let chartAsistencia = null;
+
+    document.addEventListener('DOMContentLoaded', cargarEstadisticas);
+
+    function cargarEstadisticas() {
+        document.getElementById('loadingState').style.display = '';
+        document.getElementById('statsCards').style.removeProperty('display');
+        document.getElementById('statsCards').style.display = 'none';
+        document.getElementById('chartsSection').style.display = 'none';
+        document.getElementById('errorState').classList.add('d-none');
+
+        fetch(`/api/eventos/${eventoId}/resumen`, { credentials: 'same-origin' })
+            .then(res => {
+                if (!res.ok) throw new Error('Error ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                document.getElementById('loadingState').style.display = 'none';
+
+                document.getElementById('totalInscritos').textContent = data.totalInscritos ?? 0;
+                document.getElementById('totalAsistentes').textContent = data.totalAsistentes ?? 0;
+                document.getElementById('porcentajeAsistencia').textContent =
+                    (data.porcentajeAsistencia != null ? data.porcentajeAsistencia.toFixed(1) : 0) + '%';
+
+                document.getElementById('statsCards').style.removeProperty('display');
+                document.getElementById('chartsSection').style.removeProperty('display');
+
+                // Gráfico inscripciones por día
+                if (data.registrosPorDia && Object.keys(data.registrosPorDia).length > 0) {
+                    const labelsReg = Object.keys(data.registrosPorDia);
+                    const valuesReg = Object.values(data.registrosPorDia);
+                    if (chartRegistros) chartRegistros.destroy();
+                    chartRegistros = new Chart(document.getElementById('graficoRegistros'), {
+                        type: 'bar',
+                        data: {
+                            labels: labelsReg,
+                            datasets: [{
+                                label: 'Inscripciones',
+                                data: valuesReg,
+                                backgroundColor: '#212529',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        }
+                    });
+                }
+
+                // Gráfico asistencia por hora
+                if (data.asistenciaPorHora && Object.keys(data.asistenciaPorHora).length > 0) {
+                    const labelsAsis = Object.keys(data.asistenciaPorHora);
+                    const valuesAsis = Object.values(data.asistenciaPorHora);
+                    if (chartAsistencia) chartAsistencia.destroy();
+                    chartAsistencia = new Chart(document.getElementById('graficoAsistencia'), {
+                        type: 'line',
+                        data: {
+                            labels: labelsAsis,
+                            datasets: [{
+                                label: 'Asistentes',
+                                data: valuesAsis,
+                                borderColor: '#198754',
+                                backgroundColor: 'rgba(25,135,84,0.1)',
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        }
+                    });
+                }
+            })
+            .catch(() => {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').classList.remove('d-none');
+            });
+    }
+</script>
+<script src="/js/darkmode.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<nav th:fragment="navbar(usuario)" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="bi bi-calendar-event-fill text-warning"></i> Eventos PUCMM
+        </a>
+
+        <div th:if="${usuario != null}">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+
+                    <!-- Todos ven Eventos -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/eventos">
+                            <i class="bi bi-calendar3"></i> Eventos
+                        </a>
+                    </li>
+
+                    <!-- Solo Participante ve Mis Inscripciones -->
+                    <li class="nav-item" th:if="${usuario.rol.name() == 'PARTICIPANTE'}">
+                        <a class="nav-link" href="/mis-inscripciones">
+                            <i class="bi bi-ticket-perforated"></i> Mis Inscripciones
+                        </a>
+                    </li>
+
+                    <!-- Organizador: enlace directo a Mis Eventos -->
+                    <li class="nav-item" th:if="${usuario.rol.name() == 'ORGANIZADOR'}">
+                        <a class="nav-link" href="/organizador/eventos">
+                            <i class="bi bi-gear"></i> Administrar Eventos
+                        </a>
+                    </li>
+
+                    <!-- Organizador: Dashboard -->
+                    <li class="nav-item" th:if="${usuario.rol.name() == 'ORGANIZADOR'}">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-bar-chart-line"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Admin: dropdown Administrar -->
+                    <li class="nav-item dropdown" th:if="${usuario.rol.name() == 'ADMINISTRADOR'}">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-shield-lock"></i> Administrar
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="/admin/usuarios">
+                                    <i class="bi bi-people"></i> Gestionar Usuarios
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/admin/eventos">
+                                    <i class="bi bi-calendar-check"></i> Gestionar Eventos
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Admin: Dashboard -->
+                    <li class="nav-item" th:if="${usuario.rol.name() == 'ADMINISTRADOR'}">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-bar-chart-line"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Toggle modo oscuro -->
+                    <li class="nav-item">
+                        <button class="btn nav-link border-0 bg-transparent" id="darkModeToggle" onclick="toggleDarkMode()" title="Modo oscuro">
+                            <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                        </button>
+                    </li>
+
+                    <!-- Dropdown usuario -->
+                    <!-- Dropdown usuario -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <img th:if="${usuario.fotoBase64 != null}"
+                                 th:src="${usuario.fotoBase64}"
+                                 class="rounded-circle me-1"
+                                 style="width:28px;height:28px;object-fit:cover;">
+                            <i th:unless="${usuario.fotoBase64 != null}" class="bi bi-person-circle"></i>
+                            <span th:text="${usuario.nombre}"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+            <span class="dropdown-item-text text-muted small"
+                  th:text="${usuario.email}">
+            </span>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="/perfil">
+                                    <i class="bi bi-person-gear"></i> Mi Perfil
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="/logout">
+                                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>

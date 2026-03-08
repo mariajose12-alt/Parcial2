@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner QR - Eventos PUCMM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div th:replace="~{fragments/navbar :: navbar(${usuario})}"></div>
+
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-qr-code-scan"></i> Escáner de Asistencia</h2>
+        <a href="/organizador/eventos" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 text-center">
+                    <p class="text-muted mb-3">Apunta la cámara al código QR del participante</p>
+                    <div id="qr-reader"></div>
+                    <div id="qr-result" class="alert mt-4 d-none"></div>
+                    <div class="mt-3">
+                        <button id="btnIniciar" class="btn btn-dark">
+                            <i class="bi bi-camera"></i> Iniciar cámara
+                        </button>
+                        <button id="btnDetener" class="btn btn-outline-secondary d-none">
+                            <i class="bi bi-stop-circle"></i> Detener
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-keyboard"></i> Validar manualmente</h6>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="tokenManual"
+                               placeholder="Pega el token del QR aquí">
+                        <button class="btn btn-dark" onclick="validarTokenManual()">
+                            <i class="bi bi-check-lg"></i> Validar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial de escaneos de esta sesión -->
+            <div class="card shadow-sm border-0 mt-4" id="historialCard" style="display:none">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-clock-history"></i> Escaneos de esta sesión</h6>
+                    <ul class="list-group list-group-flush" id="historialList"></ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<footer class="bg-dark text-light text-center py-3 mt-auto">
+    <small>© 2025 PUCMM - Sistema de Gestión de Eventos Académicos</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    let html5QrCode = null;
+    let yaEscaneado = false;
+    const historial = [];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('btnIniciar').addEventListener('click', function () {
+            yaEscaneado = false;
+            html5QrCode = new Html5Qrcode('qr-reader');
+            html5QrCode.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                () => {}
+            ).then(() => {
+                document.getElementById('btnIniciar').classList.add('d-none');
+                document.getElementById('btnDetener').classList.remove('d-none');
+            });
+        });
+
+        document.getElementById('btnDetener').addEventListener('click', detenerCamara);
+
+        document.getElementById('tokenManual').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') validarTokenManual();
+        });
+    });
+
+    function detenerCamara() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('btnIniciar').classList.remove('d-none');
+                document.getElementById('btnDetener').classList.add('d-none');
+            });
+        }
+    }
+
+    function onScanSuccess(decodedText) {
+        if (yaEscaneado) return;
+        yaEscaneado = true;
+        detenerCamara();
+        const params = new URLSearchParams(decodedText);
+        const token = params.get('token') || decodedText;
+        validarToken(token);
+    }
+
+    function validarTokenManual() {
+        const token = document.getElementById('tokenManual').value.trim();
+        if (!token) return;
+        validarToken(token);
+        document.getElementById('tokenManual').value = '';
+    }
+
+    function mostrarResultado(esExito, mensaje) {
+        const resultDiv = document.getElementById('qr-result');
+        resultDiv.classList.remove('alert-success', 'alert-danger', 'd-none');
+        resultDiv.classList.add(esExito ? 'alert-success' : 'alert-danger');
+        resultDiv.innerHTML = (esExito ? '<i class="bi bi-check-circle-fill me-2"></i>' : '<i class="bi bi-x-circle-fill me-2"></i>') + mensaje;
+        resultDiv.style.display = 'block';
+
+        // Agregar al historial
+        historial.unshift({ exito: esExito, mensaje, hora: new Date().toLocaleTimeString() });
+        actualizarHistorial();
+
+        setTimeout(() => {
+            resultDiv.classList.add('d-none');
+            yaEscaneado = false;
+        }, 5000);
+    }
+
+    function actualizarHistorial() {
+        const card = document.getElementById('historialCard');
+        const list = document.getElementById('historialList');
+        card.style.display = '';
+        list.innerHTML = historial.slice(0, 10).map(h =>
+            `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <span class="${h.exito ? 'text-success' : 'text-danger'}">
+                    <i class="bi ${h.exito ? 'bi-check-circle' : 'bi-x-circle'} me-2"></i>${h.mensaje}
+                </span>
+                <small class="text-muted">${h.hora}</small>
+            </li>`
+        ).join('');
+    }
+
+    function validarToken(token) {
+        const resultDiv = document.getElementById('qr-result');
+        resultDiv.classList.remove('alert-success', 'alert-danger', 'd-none');
+        resultDiv.classList.add('alert-secondary');
+        resultDiv.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Validando...';
+        resultDiv.style.display = 'block';
+
+        fetch('/api/asistencia/validar', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) {
+                    mostrarResultado(false, data.error || 'Error al validar');
+                } else {
+                    mostrarResultado(true, data.mensaje || 'Asistencia registrada');
+                }
+            })
+            .catch(() => mostrarResultado(false, 'Error de conexión'));
+    }
+</script>
+<script src="/js/darkmode.js"></script>
+</body>
+</html>
