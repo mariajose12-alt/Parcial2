@@ -1,0 +1,7 @@
+services:
+  eventos:
+    image: parcial2-eventos
+    container_name: parcial2-eventos-container
+    ports:
+      - "7000:7000"
+    restart: always
