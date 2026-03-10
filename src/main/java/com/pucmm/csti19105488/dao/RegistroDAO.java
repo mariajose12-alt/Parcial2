@@ -4,6 +4,8 @@ import com.pucmm.csti19105488.model.Registro;
 import com.pucmm.csti19105488.util.HibernateUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
+
+import java.time.LocalDate;
 import java.util.List;
 
 public class RegistroDAO {
@@ -65,7 +67,7 @@ public class RegistroDAO {
         }
     }
 
-    public boolean existeInscripcion(Long usuarioId, Long eventoId) {
+    public static boolean existeInscripcion(Long usuarioId, Long eventoId) {
         EntityManager em = HibernateUtil.getEntityManagerFactory().createEntityManager();
         try {
             Long count = em.createQuery(
@@ -123,4 +125,27 @@ public class RegistroDAO {
             em.close();
         }
     }
+
+    public static boolean existeAsistenciaHoy(Long registroId, LocalDate fecha) {
+
+        EntityManager em = HibernateUtil.getEntityManagerFactory().createEntityManager();
+
+        try {
+
+            Long count = em.createQuery(
+                            "SELECT COUNT(a) FROM Asistencia a " +
+                                    "WHERE a.registro.id = :rid AND a.fecha = :fecha",
+                            Long.class)
+                    .setParameter("rid", registroId)
+                    .setParameter("fecha", fecha)
+                    .getSingleResult();
+
+            return count > 0;
+
+        } finally {
+            em.close();
+        }
+    }
+
+
 }

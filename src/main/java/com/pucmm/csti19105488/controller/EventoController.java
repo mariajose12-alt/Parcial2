@@ -1,8 +1,10 @@
 package com.pucmm.csti19105488.controller;
 
+import com.pucmm.csti19105488.dao.RegistroDAO;
 import com.pucmm.csti19105488.model.Evento;
 import com.pucmm.csti19105488.model.Registro;
 import com.pucmm.csti19105488.model.Usuario;
+import com.pucmm.csti19105488.model.enums.TipoEvento;
 import com.pucmm.csti19105488.model.enums.TipoUsuario;
 import com.pucmm.csti19105488.service.EstadisticaService;
 import com.pucmm.csti19105488.service.EventoService;
@@ -26,19 +28,40 @@ public class EventoController {
         // Lista de eventos públicos (participantes)
         get("/eventos", ctx -> {
             if (!UsuarioController.estaAutenticado(ctx)) { ctx.redirect("/login"); return; }
+
+            Usuario usuario = ctx.sessionAttribute("usuario");
+            List<Evento> eventos = eventoService.listarPublicados();
+
+            for (Evento e : eventos) {
+                boolean inscrito = RegistroDAO.existeInscripcion(usuario.getId(), e.getId());
+                e.setUsuarioInscrito(inscrito);
+            }
+
             Map<String, Object> model = new HashMap<>();
-            model.put("usuario", ctx.sessionAttribute("usuario"));
-            model.put("eventos", eventoService.listarPublicados());
+            model.put("usuario", usuario);
+            model.put("eventos", eventos);
+
             ctx.render("/eventos/lista.html", model);
         });
 
-        // Lista de eventos del organizador
+        // Lista de eventos para el admin (todos) y organizador (owned)
         get("/organizador/eventos", ctx -> {
-            if (!UsuarioController.esOrganizador(ctx)) { ctx.redirect("/login"); return; }
+
+            if (!UsuarioController.esOrganizador(ctx) && !UsuarioController.esAdmin(ctx)) {
+                ctx.redirect("/login");
+                return;
+            }
+
             Usuario u = ctx.sessionAttribute("usuario");
             Map<String, Object> model = new HashMap<>();
             model.put("usuario", u);
-            model.put("eventos", eventoService.listarTodos());
+
+            if (u.getRol() == TipoUsuario.ADMINISTRADOR) {
+                model.put("eventos", eventoService.listarTodos());
+            } else {
+                model.put("eventos", eventoService.listarPorOrganizador(u.getId()));
+            }
+
             ctx.render("/organizador/eventos.html", model);
         });
 
@@ -60,13 +83,19 @@ public class EventoController {
             }
 
             Usuario u = ctx.sessionAttribute("usuario");
+            LocalDateTime inicio = LocalDateTime.parse(ctx.formParam("fechaInicio"));
+            LocalDateTime fin = LocalDateTime.parse(ctx.formParam("fechaFin"));
+
+            TipoEvento tipo = TipoEvento.valueOf(ctx.formParam("tipo"));
 
             try {
 
                 eventoService.crearEvento(
                         ctx.formParam("titulo"),
                         ctx.formParam("descripcion"),
-                        LocalDateTime.parse(ctx.formParam("fecha")),
+                        inicio,
+                        fin,
+                        tipo,
                         ctx.formParam("lugar"),
                         Integer.parseInt(ctx.formParam("capacidadMax")),
                         u
@@ -95,12 +124,61 @@ public class EventoController {
 
         // Formulario editar evento
         get("/organizador/eventos/{id}/editar", ctx -> {
-            if (!UsuarioController.esOrganizador(ctx) && !UsuarioController.esAdmin(ctx)) { ctx.redirect("/login"); return; }
+
+            if (!UsuarioController.esOrganizador(ctx) && !UsuarioController.esAdmin(ctx)) {
+                ctx.redirect("/login");
+                return;
+            }
+
             Long id = Long.parseLong(ctx.pathParam("id"));
+            Usuario u = ctx.sessionAttribute("usuario");
+
+            Evento evento = eventoService.buscarPorId(id);
+
+            if (evento == null) {
+                ctx.status(404);
+                return;
+            }
+
+            // Seguridad: organizador solo puede editar los suyos
+            if (u.getRol() == TipoUsuario.ORGANIZADOR &&
+                    !evento.getOrganizador().getId().equals(u.getId())) {
+                ctx.status(403);
+                return;
+            }
+
             Map<String, Object> model = new HashMap<>();
-            model.put("usuario", ctx.sessionAttribute("usuario"));
-            model.put("evento", eventoService.buscarPorId(id));
+            model.put("usuario", u);
+            model.put("evento", evento);
+
             ctx.render("/organizador/evento-form.html", model);
+        });
+
+        // Ver/Administrar solo el evento seleccionado (nueva vista)
+        get("/organizador/eventos/{id}", ctx -> {
+            if (!UsuarioController.esOrganizador(ctx) && !UsuarioController.esAdmin(ctx)) {
+                ctx.redirect("/login");
+                return;
+            }
+
+            Long id = Long.parseLong(ctx.pathParam("id"));
+            Usuario u = ctx.sessionAttribute("usuario");
+            Evento evento = eventoService.buscarPorId(id);
+
+            if (evento == null) { ctx.status(404); return; }
+
+            if (u.getRol() == TipoUsuario.ORGANIZADOR &&
+                    !evento.getOrganizador().getId().equals(u.getId())) {
+                ctx.status(403);
+                return;
+            }
+
+            Map<String, Object> model = new HashMap<>();
+            model.put("usuario", u);
+            model.put("evento", evento);
+            model.put("inscritos", RegistroService.listarPorEvento(evento.getId()));
+
+            ctx.render("/organizador/evento-detalle.html", model);
         });
 
         // Procesar editar evento
@@ -109,11 +187,19 @@ public class EventoController {
             Long id = ctx.formParam("id") != null
                     ? Long.parseLong(ctx.formParam("id"))
                     : null;
+
+            TipoEvento tipo = TipoEvento.valueOf(ctx.formParam("tipo"));
+
+            LocalDateTime inicio = LocalDateTime.parse(ctx.formParam("fechaInicio"));
+            LocalDateTime fin = LocalDateTime.parse(ctx.formParam("fechaFin"));
+
             String error = eventoService.editarEvento(
                     id,
                     ctx.formParam("titulo"),
                     ctx.formParam("descripcion"),
-                    LocalDateTime.parse(ctx.formParam("fecha")),
+                    inicio,
+                    fin,
+                    tipo,
                     ctx.formParam("lugar"),
                     Integer.parseInt(ctx.formParam("capacidadMax"))
             );

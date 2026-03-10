@@ -1,6 +1,6 @@
 <nav th:fragment="navbar(usuario)" class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="/">
+        <a class="navbar-brand fw-bold" href="/eventos">
             <i class="bi bi-calendar-event-fill text-warning"></i> Eventos PUCMM
         </a>
 
@@ -74,7 +74,6 @@
                     </li>
 
                     <!-- Dropdown usuario -->
-                    <!-- Dropdown usuario -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <img th:if="${usuario.fotoBase64 != null}"
@@ -86,9 +85,9 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-            <span class="dropdown-item-text text-muted small"
-                  th:text="${usuario.email}">
-            </span>
+                                <span class="dropdown-item-text text-muted small"
+                                      th:text="${usuario.email}">
+                                </span>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>

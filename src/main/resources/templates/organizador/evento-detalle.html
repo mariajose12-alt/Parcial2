@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${evento.titulo} + ' - Eventos PUCMM'">Detalle de Evento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div th:replace="~{fragments/navbar :: navbar(${usuario})}"></div>
+
+<div class="container mt-4 mb-5">
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/organizador/eventos" class="text-decoration-none">
+                    <i class="bi bi-gear"></i> Mis Eventos
+                </a>
+            </li>
+            <li class="breadcrumb-item active" th:text="${evento.titulo}"></li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <span th:switch="${evento.estado.name()}">
+                        <span th:case="'PUBLICADO'"
+                              class="badge bg-success fs-6 fw-normal px-3 py-2">
+                            <i class="bi bi-eye"></i> Publicado
+                        </span>
+                        <span th:case="'BORRADOR'"
+                              class="badge bg-secondary fs-6 fw-normal px-3 py-2">
+                            <i class="bi bi-pencil"></i> Borrador
+                        </span>
+                        <span th:case="'CANCELADO'"
+                              class="badge bg-danger fs-6 fw-normal px-3 py-2">
+                            <i class="bi bi-x-circle"></i> Cancelado
+                        </span>
+                    </span>
+                    <h2 class="fw-bold mt-2 mb-1" th:text="${evento.titulo}"></h2>
+                    <div class="text-muted" style="font-size:14px;">
+                        Organizado por
+                        <strong th:text="${evento.organizador.nombre
+                            + ' ' + evento.organizador.apellido}">
+                        </strong>
+                    </div>
+                </div>
+
+                <!-- Acciones -->
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="btn-group">
+                        <a th:href="'/organizador/eventos/' + ${evento.id} + '/editar'"
+                           class="btn btn-outline-dark" title="Editar">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a th:href="'/organizador/eventos/' + ${evento.id} + '/resumen'"
+                           class="btn btn-outline-primary" title="Estadísticas">
+                            <i class="bi bi-bar-chart"></i> Estadísticas
+                        </a>
+                        <a th:href="'/organizador/eventos/' + ${evento.id} + '/scanner'"
+                           class="btn btn-outline-success" title="Escáner QR">
+                            <i class="bi bi-qr-code-scan"></i> Escáner
+                        </a>
+                    </div>
+
+                    <form th:if="${evento.estado.name() == 'BORRADOR'}"
+                          th:action="'/organizador/eventos/' + ${evento.id} + '/publicar'"
+                          method="post" class="d-inline">
+                        <button class="btn btn-success">
+                            <i class="bi bi-eye"></i> Publicar
+                        </button>
+                    </form>
+
+                    <form th:if="${evento.estado.name() == 'PUBLICADO'}"
+                          th:action="'/organizador/eventos/' + ${evento.id} + '/despublicar'"
+                          method="post" class="d-inline">
+                        <button class="btn btn-warning">
+                            <i class="bi bi-eye-slash"></i> Despublicar
+                        </button>
+                    </form>
+
+                    <form th:unless="${evento.estado.name() == 'CANCELADO'}"
+                          th:action="'/organizador/eventos/' + ${evento.id} + '/cancelar'"
+                          method="post" class="d-inline confirm-form"
+                          th:data-mensaje="'¿Cancelar el evento ' + ${evento.titulo} + '?'">
+                        <button class="btn btn-outline-danger">
+                            <i class="bi bi-x-lg"></i> Cancelar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Columna izquierda -->
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white fw-semibold border-bottom">
+                    <i class="bi bi-info-circle text-primary"></i> Detalles
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0" style="font-size:14px;">
+
+                        <!-- Tipo -->
+                        <li class="d-flex gap-2 mb-3">
+                            <i class="bi bi-tag text-muted mt-1 flex-shrink-0"></i>
+                            <div>
+                                <div class="fw-semibold text-muted small">Tipo</div>
+                                <span th:switch="${evento.tipo.name()}">
+                                    <span th:case="'CHARLA'"
+                                          class="badge bg-info text-dark">Charla</span>
+                                    <span th:case="'TALLER'"
+                                          class="badge bg-warning text-dark">Taller</span>
+                                    <span th:case="'SEMINARIO'"
+                                          class="badge bg-primary">Seminario</span>
+                                    <span th:case="'CONGRESO'"
+                                          class="badge bg-dark">Congreso</span>
+                                </span>
+                            </div>
+                        </li>
+
+                        <!-- Fecha inicio -->
+                        <li class="d-flex gap-2 mb-3">
+                            <i class="bi bi-calendar-check text-muted mt-1 flex-shrink-0"></i>
+                            <div>
+                                <div class="fw-semibold text-muted small">Inicio</div>
+                                <div th:text="${evento.fechaInicioFormateada}"></div>
+                            </div>
+                        </li>
+
+                        <!-- Fecha fin -->
+                        <li class="d-flex gap-2 mb-3">
+                            <i class="bi bi-calendar-x text-muted mt-1 flex-shrink-0"></i>
+                            <div>
+                                <div class="fw-semibold text-muted small">Fin</div>
+                                <div th:text="${evento.fechaFinFormateada}"></div>
+                            </div>
+                        </li>
+
+                        <!-- Lugar -->
+                        <li class="d-flex gap-2 mb-3">
+                            <i class="bi bi-geo-alt text-muted mt-1 flex-shrink-0"></i>
+                            <div>
+                                <div class="fw-semibold text-muted small">Lugar</div>
+                                <div th:text="${evento.lugar}"></div>
+                            </div>
+                        </li>
+
+                        <!-- Cupo -->
+                        <li class="d-flex gap-2 mb-3">
+                            <i class="bi bi-people text-muted mt-1 flex-shrink-0"></i>
+                            <div class="w-100">
+                                <div class="fw-semibold text-muted small">Cupo</div>
+                                <div>
+                                    <span th:text="${evento.inscritosActuales}"></span>
+                                    inscritos de
+                                    <span th:text="${evento.capacidadMax}"></span>
+                                </div>
+                                <div class="progress mt-2" style="height:6px;">
+                                    <div class="progress-bar"
+                                         th:classappend="${evento.inscritosActuales >= evento.capacidadMax}
+                                             ? 'bg-danger'
+                                             : (${evento.inscritosActuales * 100 / evento.capacidadMax >= 70}
+                                             ? 'bg-warning' : 'bg-success')"
+                                         role="progressbar"
+                                         th:style="'width:' + ${evento.capacidadMax > 0
+                                             ? (evento.inscritosActuales * 100 / evento.capacidadMax)
+                                             : 0} + '%'">
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- Estado temporal -->
+                        <li class="d-flex gap-2">
+                            <i class="bi bi-clock text-muted mt-1 flex-shrink-0"></i>
+                            <div>
+                                <div class="fw-semibold text-muted small">
+                                    Estado temporal
+                                </div>
+                                <span th:if="${evento.estaEnCurso()}"
+                                      class="badge bg-success">
+                                    <i class="bi bi-circle-fill"
+                                       style="font-size:8px;"></i> En curso
+                                </span>
+                                <span th:if="${evento.haTerminado()}"
+                                      class="badge bg-secondary">
+                                    Finalizado
+                                </span>
+                                <span th:if="${!evento.haComenzado()}"
+                                      class="badge bg-info text-dark">
+                                    Próximo
+                                </span>
+                            </div>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Descripción -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-semibold border-bottom">
+                    <i class="bi bi-text-left text-primary"></i> Descripción
+                </div>
+                <div class="card-body">
+                    <p class="mb-0 text-muted"
+                       style="font-size:14px;line-height:1.7;"
+                       th:text="${not #strings.isEmpty(evento.descripcion)}
+                           ? ${evento.descripcion}
+                           : 'Sin descripción'">
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Columna derecha: inscritos -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom
+                            d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">
+                        <i class="bi bi-people text-primary"></i>
+                        Lista de Inscritos
+                    </span>
+                    <span class="badge bg-primary rounded-pill"
+                          th:text="${inscritos != null ? inscritos.size() : 0}">
+                    </span>
+                </div>
+
+                <div class="card-body border-bottom py-2 px-3">
+                    <input type="text" id="buscarInscrito"
+                           class="form-control form-control-sm"
+                           placeholder="Buscar por nombre o email..."
+                           oninput="filtrarInscritos()">
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0"
+                               id="tablaInscritos">
+                            <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">#</th>
+                                <th>Participante</th>
+                                <th>Email</th>
+                                <th>Fecha Inscripción</th>
+                                <th class="pe-4">Asistencia</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="reg, i : ${inscritos}"
+                                th:data-nombre="${reg.participante.nombre
+                                        + ' ' + reg.participante.apellido}"
+                                th:data-email="${reg.participante.email}">
+                                <td class="ps-4 text-muted"
+                                    th:text="${i.count}"></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="width:32px;height:32px;
+                                                        border-radius:50%;
+                                                        background:#0d6efd;
+                                                        color:white;font-size:12px;
+                                                        font-weight:700;
+                                                        display:flex;
+                                                        align-items:center;
+                                                        justify-content:center;
+                                                        flex-shrink:0;">
+                                                <span th:text="${#strings.toUpperCase(
+                                                    #strings.substring(reg.participante.nombre,0,1)
+                                                    + #strings.substring(reg.participante.apellido,0,1))}">
+                                                </span>
+                                        </div>
+                                        <span class="fw-semibold"
+                                              th:text="${reg.participante.nombre
+                                                      + ' ' + reg.participante.apellido}">
+                                            </span>
+                                    </div>
+                                </td>
+                                <td class="text-muted"
+                                    th:text="${reg.participante.email}"></td>
+                                <td class="text-muted"
+                                    th:text="${#temporals.format(reg.fechaRegistro,
+                                            'dd MMM yyyy')}">
+                                </td>
+                                <td class="pe-4">
+                                        <span th:if="${reg.asistenciaConfirmada}"
+                                              class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Asistió
+                                        </span>
+                                    <span th:unless="${reg.asistenciaConfirmada}"
+                                          class="badge bg-light text-muted border">
+                                            <i class="bi bi-clock"></i> Pendiente
+                                        </span>
+                                </td>
+                            </tr>
+                            <tr th:if="${inscritos == null or inscritos.isEmpty()}">
+                                <td colspan="5"
+                                    class="text-center text-muted py-5">
+                                    <i class="bi bi-people fs-2 d-block mb-2"></i>
+                                    No hay inscritos aún
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal confirmar -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                    Confirmar acción
+                </h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirmModalText">
+                ¿Confirmar acción?
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                        data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger"
+                        id="confirmModalBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-light text-center py-3 mt-auto">
+    <small>© 2025 PUCMM - Sistema de Gestión de Eventos Académicos</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/darkmode.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let formToSubmit = null;
+        document.querySelectorAll('.confirm-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                formToSubmit = this;
+                document.getElementById('confirmModalText').innerText =
+                    this.dataset.mensaje || '¿Confirmar acción?';
+                new bootstrap.Modal(document.getElementById('confirmModal')).show();
+            });
+        });
+        document.getElementById('confirmModalBtn').addEventListener('click', () => {
+            if (formToSubmit) formToSubmit.submit();
+        });
+    });
+
+    function filtrarInscritos() {
+        const busqueda = document.getElementById('buscarInscrito').value.toLowerCase();
+        document.querySelectorAll('#tablaInscritos tbody tr[data-nombre]').forEach(fila => {
+            const nombre = fila.dataset.nombre.toLowerCase();
+            const email  = fila.dataset.email.toLowerCase();
+            fila.style.display =
+                (!busqueda || nombre.includes(busqueda) || email.includes(busqueda))
+                    ? '' : 'none';
+        });
+    }
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@ import java.util.List;
 
 public class UsuarioDAO {
 
-    public void guardar(Usuario usuario) {
+    public static void guardar(Usuario usuario) {
         EntityManager em = HibernateUtil.getEntityManagerFactory().createEntityManager();
         try {
             em.getTransaction().begin();
@@ -41,7 +41,7 @@ public class UsuarioDAO {
         }
     }
 
-    public Usuario buscarPorEmail(String email) {
+    public static Usuario buscarPorEmail(String email) {
         EntityManager em = HibernateUtil.getEntityManagerFactory().createEntityManager();
         try {
             return em.createQuery("SELECT u FROM Usuario u WHERE u.email = :email", Usuario.class)

@@ -449,6 +449,12 @@ hr {
 .card:nth-child(5) { animation-delay: 0.25s; }
 .card:nth-child(6) { animation-delay: 0.30s; }
 
+.was-validated .form-control:valid,
+.form-control.is-valid {
+    border-color: #dee2e6 !important;
+    background-image: none !important;
+}
+
 /* ===== RESPONSIVO ===== */
 @media (max-width: 768px) {
     .stat-number { font-size: 2rem; }

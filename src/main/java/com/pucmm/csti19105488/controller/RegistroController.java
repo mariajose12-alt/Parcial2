@@ -48,7 +48,7 @@ public class RegistroController {
                 ctx.status(404).json(Map.of("error", "Evento no encontrado"));
                 return;
             }
-            if (evento.getFecha().isBefore(LocalDateTime.now())) {
+            if (evento.getFechaFin().isBefore(LocalDateTime.now())) {
                 ctx.status(400).json(Map.of("error", "No puedes cancelar una inscripción de un evento que ya ocurrió"));
                 return;
             }

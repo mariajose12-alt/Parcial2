@@ -1,10 +1,13 @@
 package com.pucmm.csti19105488.dao;
 
 import com.pucmm.csti19105488.model.enums.EstadoEvento;
+import com.pucmm.csti19105488.model.enums.TipoEvento;
 import com.pucmm.csti19105488.model.Evento;
 import com.pucmm.csti19105488.util.HibernateUtil;
 import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
 import java.util.List;
+
 
 public class EventoDAO {
 
@@ -84,17 +87,29 @@ public class EventoDAO {
         }
     }
 
-    public boolean existeEvento(String titulo, java.time.LocalDateTime fecha, String lugar) {
+    public boolean existeEvento(String titulo,
+                                LocalDateTime fechaInicio,
+                                LocalDateTime fechaFin,
+                                TipoEvento tipo,
+                                String lugar) {
+
         EntityManager em = HibernateUtil.getEntityManagerFactory().createEntityManager();
+
         try {
+
             Long count = em.createQuery(
                             "SELECT COUNT(e) FROM Evento e " +
                                     "WHERE lower(e.titulo) = :titulo " +
-                                    "AND e.fecha = :fecha " +
+                                    "AND e.fechaInicio = :inicio " +
+                                    "AND e.fechaFin = :fin " +
+                                    "AND e.tipo = :tipo " +
                                     "AND lower(e.lugar) = :lugar",
-                            Long.class)
+                            Long.class
+                    )
                     .setParameter("titulo", titulo.toLowerCase())
-                    .setParameter("fecha", fecha)
+                    .setParameter("inicio", fechaInicio)
+                    .setParameter("fin", fechaFin)
+                    .setParameter("tipo", tipo)
                     .setParameter("lugar", lugar.toLowerCase())
                     .getSingleResult();
 

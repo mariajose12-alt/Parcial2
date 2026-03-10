@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${evento.id != null ? 'Editar Evento' : 'Nuevo Evento'} + ' - Eventos PUCMM'">Evento - Eventos PUCMM</title>
+    <title th:text="${evento.id != null ? 'Editar Evento' : 'Nuevo Evento'} + ' - Eventos PUCMM'">
+        Evento - Eventos PUCMM
+    </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/css/styles.css" rel="stylesheet">
@@ -15,7 +17,8 @@
 <div class="container mt-4 mb-5">
 
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
@@ -23,69 +26,135 @@
         <div class="col-md-8">
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
+
                     <h4 class="fw-bold mb-4">
                         <i class="bi bi-calendar-plus"></i>
                         <span th:text="${evento.id != null ? 'Editar Evento' : 'Nuevo Evento'}"></span>
                     </h4>
 
                     <form id="eventoForm"
-                          th:action="${evento.id != null ? '/organizador/eventos/' + evento.id + '/editar' : '/organizador/eventos/nuevo'}"
+                          th:action="${evento.id != null
+                              ? '/organizador/eventos/' + evento.id + '/editar'
+                              : '/organizador/eventos/nuevo'}"
                           method="post" class="needs-validation" novalidate>
 
+                        <!-- Título -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Título del evento</label>
                             <input type="text" class="form-control" name="titulo"
-                                   th:value="${evento != null ? evento.titulo : ''}"
+                                   th:value="${evento.titulo}"
                                    required minlength="3"
                                    placeholder="Ej: Taller de Inteligencia Artificial">
-                            <div class="invalid-feedback">El título es requerido (mínimo 3 caracteres).</div>
+                            <div class="invalid-feedback">
+                                El título es requerido (mínimo 3 caracteres).
+                            </div>
                         </div>
 
+                        <!-- Descripción -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Descripción</label>
-                            <textarea class="form-control" name="descripcion" rows="4"
-                                      required minlength="10"
+                            <textarea class="form-control" name="descripcion"
+                                      rows="4" required minlength="10"
                                       placeholder="Describe el evento..."
-                                      th:text="${evento != null ? evento.descripcion : ''}"></textarea>
-                            <div class="invalid-feedback">La descripción es requerida (mínimo 10 caracteres).</div>
+                                      th:text="${evento.descripcion}"></textarea>
+                            <div class="invalid-feedback">
+                                La descripción es requerida (mínimo 10 caracteres).
+                            </div>
                         </div>
 
+                        <!-- Tipo -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tipo de evento</label>
+                            <select class="form-select" name="tipo" required>
+                                <option value="">Selecciona un tipo...</option>
+                                <option value="CHARLA"
+                                        th:selected="${evento.tipo != null and evento.tipo.name() == 'CHARLA'}">
+                                    Charla
+                                </option>
+                                <option value="TALLER"
+                                        th:selected="${evento.tipo != null and evento.tipo.name() == 'TALLER'}">
+                                    Taller
+                                </option>
+                                <option value="SEMINARIO"
+                                        th:selected="${evento.tipo != null and evento.tipo.name() == 'SEMINARIO'}">
+                                    Seminario
+                                </option>
+                                <option value="CONGRESO"
+                                        th:selected="${evento.tipo != null and evento.tipo.name() == 'CONGRESO'}">
+                                    Congreso
+                                </option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Selecciona un tipo de evento.
+                            </div>
+                        </div>
+
+                        <!-- Fechas -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Fecha y hora</label>
-                                <input type="datetime-local" class="form-control" name="fecha" id="fechaInput"
-                                       th:value="${evento.fechaParaInput}"
+                                <label class="form-label fw-semibold">
+                                    Fecha y hora de inicio
+                                </label>
+                                <input type="datetime-local" class="form-control"
+                                       name="fechaInicio" id="fechaInicioInput"
+                                       th:value="${evento.fechaInicioParaInput}"
                                        required>
-                                <div class="invalid-feedback" id="fechaError">La fecha es requerida.</div>
+                                <div class="invalid-feedback" id="fechaInicioError">
+                                    La fecha de inicio es requerida.
+                                </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Cupo máximo</label>
-                                <input type="number" class="form-control" name="capacidadMax"
-                                       th:value="${evento != null ? evento.capacidadMax : ''}"
-                                       required min="1" max="1000"
-                                       placeholder="Ej: 50">
-                                <div class="invalid-feedback">Ingresa un cupo válido (mínimo 1).</div>
+                                <label class="form-label fw-semibold">
+                                    Fecha y hora de fin
+                                </label>
+                                <input type="datetime-local" class="form-control"
+                                       name="fechaFin" id="fechaFinInput"
+                                       th:value="${evento.fechaFinParaInput}"
+                                       required>
+                                <div class="invalid-feedback" id="fechaFinError">
+                                    La fecha de fin es requerida.
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold">Lugar</label>
-                            <input type="text" class="form-control" name="lugar"
-                                   th:value="${evento != null ? evento.lugar : ''}"
-                                   required
-                                   placeholder="Ej: Auditorio Principal, Edificio A">
-                            <div class="invalid-feedback">El lugar es requerido.</div>
+                        <!-- Cupo y Lugar -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Cupo máximo</label>
+                                <input type="number" class="form-control"
+                                       name="capacidadMax"
+                                       th:value="${evento.capacidadMax > 0 ? evento.capacidadMax : ''}"
+                                       required min="1" max="1000"
+                                       placeholder="Ej: 50">
+                                <div class="invalid-feedback">
+                                    Ingresa un cupo válido (mínimo 1).
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Lugar</label>
+                                <input type="text" class="form-control" name="lugar"
+                                       th:value="${evento.lugar}"
+                                       required
+                                       placeholder="Ej: Auditorio Principal, Edificio A">
+                                <div class="invalid-feedback">
+                                    El lugar es requerido.
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 mt-2">
                             <button type="submit" class="btn btn-dark">
                                 <i class="bi bi-save"></i>
-                                <span th:text="${evento.id != null ? 'Guardar cambios' : 'Crear evento'}"></span>
+                                <span th:text="${evento.id != null
+                                    ? 'Guardar cambios' : 'Crear evento'}">
+                                </span>
                             </button>
-                            <a href="/organizador/eventos" class="btn btn-outline-secondary">
+                            <a href="/organizador/eventos"
+                               class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Cancelar
                             </a>
                         </div>
+
                     </form>
                 </div>
             </div>
@@ -99,20 +168,37 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/darkmode.js"></script>
 <script>
-    document.getElementById('eventoForm').addEventListener('submit', function (e) {
-        const fechaInput = document.getElementById('fechaInput');
-        const fechaError = document.getElementById('fechaError');
-        const fecha = new Date(fechaInput.value);
-        const ahora = new Date();
+    document.getElementById('eventoForm').addEventListener('submit', function(e) {
+        const inicioInput = document.getElementById('fechaInicioInput');
+        const finInput    = document.getElementById('fechaFinInput');
+        const inicioError = document.getElementById('fechaInicioError');
+        const finError    = document.getElementById('fechaFinError');
+        const ahora       = new Date();
+        let valido        = true;
 
-        if (fechaInput.value && fecha <= ahora) {
+        // Fecha inicio debe ser futura
+        if (inicioInput.value && new Date(inicioInput.value) <= ahora) {
             e.preventDefault();
-            fechaInput.classList.add('is-invalid');
-            fechaError.textContent = 'La fecha debe ser futura.';
+            inicioInput.classList.add('is-invalid');
+            inicioError.textContent = 'La fecha de inicio debe ser futura.';
+            valido = false;
         } else {
-            fechaInput.classList.remove('is-invalid');
-            fechaError.textContent = 'La fecha es requerida.';
+            inicioInput.classList.remove('is-invalid');
+            inicioError.textContent = 'La fecha de inicio es requerida.';
+        }
+
+        // Fecha fin debe ser posterior a inicio
+        if (inicioInput.value && finInput.value
+            && new Date(finInput.value) <= new Date(inicioInput.value)) {
+            e.preventDefault();
+            finInput.classList.add('is-invalid');
+            finError.textContent = 'La fecha de fin debe ser posterior a la de inicio.';
+            valido = false;
+        } else if (valido) {
+            finInput.classList.remove('is-invalid');
+            finError.textContent = 'La fecha de fin es requerida.';
         }
 
         if (!this.checkValidity()) {
@@ -122,6 +208,5 @@
         this.classList.add('was-validated');
     });
 </script>
-<script src="/js/darkmode.js"></script>
 </body>
 </html>

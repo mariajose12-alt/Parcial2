@@ -50,6 +50,14 @@ public class UsuarioController {
             Map<String, Object> model = new HashMap<>();
             model.put("usuario", ctx.sessionAttribute("usuario"));
             model.put("usuarios", usuarioService.listarTodos());
+
+            // Flash messages
+            String flashError   = ctx.sessionAttribute("flashError");
+            String flashSuccess = ctx.sessionAttribute("flashSuccess");
+            if (flashError   != null) { model.put("flashError",   flashError);   ctx.sessionAttribute("flashError",   null); }
+            if (flashSuccess != null) { model.put("flashSuccess", flashSuccess); ctx.sessionAttribute("flashSuccess", null); }
+
+
             ctx.render("/admin/usuarios.html", model);
         });
 
@@ -82,6 +90,43 @@ public class UsuarioController {
             if (!esAdmin(ctx)) { ctx.redirect("/login"); return; }
             Long id = Long.parseLong(ctx.pathParam("id"));
             usuarioService.desbloquearUsuario(id);
+            ctx.redirect("/admin/usuarios");
+        });
+
+        // Crear usuario (POST)
+        post("/admin/usuarios/crear", ctx -> {
+            if (!esAdmin(ctx)) { ctx.redirect("/login"); return; }
+            String nombre   = ctx.formParam("nombre");
+            String apellido = ctx.formParam("apellido");
+            String email    = ctx.formParam("email");
+            String password = ctx.formParam("password");
+            String rol      = ctx.formParam("rol");
+
+            String error = UsuarioService.crearComoAdmin(nombre, apellido, email, password, rol);
+            if (error != null) {
+                ctx.sessionAttribute("flashError", error);
+            } else {
+                ctx.sessionAttribute("flashSuccess", "Usuario creado exitosamente");
+            }
+            ctx.redirect("/admin/usuarios");
+        });
+
+        // Editar usuario (POST)
+        post("/admin/usuarios/{id}/editar", ctx -> {
+            if (!esAdmin(ctx)) { ctx.redirect("/login"); return; }
+            Long id         = Long.parseLong(ctx.pathParam("id"));
+            String nombre   = ctx.formParam("nombre");
+            String apellido = ctx.formParam("apellido");
+            String email    = ctx.formParam("email");
+            String rol      = ctx.formParam("rol");
+            String password = ctx.formParam("password");
+
+            String error = usuarioService.editarComoAdmin(id, nombre, apellido, email, rol, password);
+            if (error != null) {
+                ctx.sessionAttribute("flashError", error);
+            } else {
+                ctx.sessionAttribute("flashSuccess", "Usuario actualizado exitosamente");
+            }
             ctx.redirect("/admin/usuarios");
         });
 

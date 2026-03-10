@@ -1,6 +1,7 @@
 package com.pucmm.csti19105488.model;
 
 import com.pucmm.csti19105488.model.enums.EstadoEvento;
+import com.pucmm.csti19105488.model.enums.TipoEvento;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +21,10 @@ public class Evento {
     private String descripcion;
 
     @Column(nullable = false)
-    private LocalDateTime fecha;
+    private LocalDateTime fechaInicio;
+
+    @Column(nullable = false)
+    private LocalDateTime fechaFin;
 
     @Column(nullable = false)
     private String lugar;
@@ -35,18 +39,25 @@ public class Evento {
     @Column(nullable = false)
     private EstadoEvento estado = EstadoEvento.BORRADOR;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoEvento tipo;
+
     @ManyToOne
     @JoinColumn(name = "organizador_id", nullable = false)
     private Usuario organizador;
 
+    @Transient
+    private boolean usuarioInscrito;
 
     public Evento() {}
 
-    public Evento(String titulo, String descripcion, LocalDateTime fecha,
-                  String lugar, int capacidadMax, Usuario organizador) {
+    public Evento(String titulo, String descripcion, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoEvento tipo, String lugar, int capacidadMax, Usuario organizador) {
         this.titulo = titulo;
         this.descripcion = descripcion;
-        this.fecha = fecha;
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
+        this.tipo = tipo;
         this.lugar = lugar;
         this.capacidadMax = capacidadMax;
         this.organizador = organizador;
@@ -68,8 +79,29 @@ public class Evento {
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+    public LocalDateTime getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(LocalDateTime fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDateTime getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(LocalDateTime fechaFin) {
+        this.fechaFin = fechaFin;
+    }
+
+    public TipoEvento getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(TipoEvento tipo) {
+        this.tipo = tipo;
+    }
 
     public String getLugar() { return lugar; }
     public void setLugar(String lugar) { this.lugar = lugar; }
@@ -86,12 +118,47 @@ public class Evento {
     public Usuario getOrganizador() { return organizador; }
     public void setOrganizador(Usuario organizador) { this.organizador = organizador; }
 
-    public String getFechaFormateada() {
-        return fecha.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+    public String getFechaInicioFormateada() {
+        return fechaInicio.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
 
-    public String getFechaParaInput() {
-        if (fecha == null) return "";
-        return fecha.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+    public String getFechaFinFormateada() {
+        return fechaFin.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+    }
+
+    public String getRangoFechasFormateado() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        return fechaInicio.format(formatter) + " - " + fechaFin.format(formatter);
+    }
+
+    public String getFechaInicioParaInput() {
+        if (fechaInicio == null) return "";
+        return fechaInicio.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+    }
+
+    public String getFechaFinParaInput() {
+        if (fechaFin == null) return "";
+        return fechaFin.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+    }
+
+    public boolean haComenzado() {
+        return LocalDateTime.now().isAfter(fechaInicio);
+    }
+
+    public boolean haTerminado() {
+        return LocalDateTime.now().isAfter(fechaFin);
+    }
+
+    public boolean estaEnCurso() {
+        LocalDateTime ahora = LocalDateTime.now();
+        return ahora.isAfter(fechaInicio) && ahora.isBefore(fechaFin);
+    }
+
+    public boolean isUsuarioInscrito() {
+        return usuarioInscrito;
+    }
+
+    public void setUsuarioInscrito(boolean usuarioInscrito) {
+        this.usuarioInscrito = usuarioInscrito;
     }
 }

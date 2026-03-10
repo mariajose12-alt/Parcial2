@@ -91,4 +91,65 @@ public class UsuarioService {
         return usuarioDAO.buscarPorId(id);
     }
 
+    //Creacion y Edicion de usuarios como Administrador
+    public static String crearComoAdmin(String nombre, String apellido,
+                                        String email, String password, String rolStr) {
+        if (nombre == null || nombre.isBlank())   return "El nombre es requerido";
+        if (apellido == null || apellido.isBlank()) return "El apellido es requerido";
+        if (email == null || email.isBlank())     return "El email es requerido";
+        if (password == null || password.length() < 8)
+            return "La contraseña debe tener mínimo 8 caracteres";
+
+        if (UsuarioDAO.buscarPorEmail(email) != null)
+            return "El email ya está registrado";
+
+        TipoUsuario rol;
+        try {
+            rol = TipoUsuario.valueOf(rolStr.toUpperCase());
+        } catch (Exception e) {
+            return "Rol inválido";
+        }
+
+        String hash = BCrypt.hashpw(password, BCrypt.gensalt());
+        Usuario u   = new Usuario(nombre, apellido, email, hash, rol);
+        UsuarioDAO.guardar(u);
+        return null; // null = sin error
+    }
+
+    public String editarComoAdmin(Long id, String nombre, String apellido, String email, String rolStr, String password) {
+        Usuario u = usuarioDAO.buscarPorId(id);
+        if (u == null) return "Usuario no encontrado";
+        if (u.getRol() == TipoUsuario.ADMINISTRADOR) return "No se puede editar al administrador";
+
+        if (nombre == null || nombre.isBlank())   return "El nombre es requerido";
+        if (apellido == null || apellido.isBlank()) return "El apellido es requerido";
+        if (email == null || email.isBlank())     return "El email es requerido";
+
+        // Verificar email duplicado en otro usuario
+        Usuario porEmail = usuarioDAO.buscarPorEmail(email);
+        if (porEmail != null && !porEmail.getId().equals(id)) {
+            return "El email ya está en uso por otro usuario";
+        }
+
+        TipoUsuario rol;
+        try {
+            rol = TipoUsuario.valueOf(rolStr.toUpperCase());
+        } catch (Exception e) {
+            return "Rol inválido";
+        }
+
+        u.setNombre(nombre);
+        u.setApellido(apellido);
+        u.setEmail(email);
+        u.setRol(rol);
+
+        if (password != null && !password.isBlank()) {
+            if (password.length() < 8) return "La contraseña debe tener mínimo 8 caracteres";
+            u.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
+        }
+
+        usuarioDAO.actualizar(u);
+        return null;
+    }
+
 }

@@ -155,7 +155,7 @@
                     <tbody>
                     <tr th:each="r : ${registros}" data-paginar="true">
                         <td class="ps-4 fw-semibold" th:text="${r.evento.titulo}"></td>
-                        <td th:text="${#temporals.format(r.evento.fecha, 'dd MMM yyyy, HH:mm')}"></td>
+                        <td th:text="${r.evento.fechaInicioFormateada}"></td>
                         <td th:text="${#temporals.format(r.fechaRegistro, 'dd MMM yyyy')}"></td>
                         <td>
                             <span th:if="${r.asistenciaConfirmada}" class="badge bg-success">

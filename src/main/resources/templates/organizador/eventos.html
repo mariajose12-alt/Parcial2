@@ -15,11 +15,13 @@
 <div class="container mt-4 mb-5">
 
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill"></i> <span th:text="${mensaje}"></span>
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${mensaje}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
@@ -33,11 +35,14 @@
     <div th:if="${not #lists.isEmpty(eventos)}" class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="tablaEventosOrg">
-                    <thead>
+                <table class="table table-hover align-middle mb-0"
+                       id="tablaEventosOrg">
+                    <thead class="table-light">
                     <tr>
                         <th class="ps-4">Título</th>
-                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
                         <th>Lugar</th>
                         <th>Cupo</th>
                         <th>Estado</th>
@@ -46,63 +51,121 @@
                     </thead>
                     <tbody>
                     <tr th:each="evento : ${eventos}" data-paginar="true">
-                        <td class="ps-4 fw-semibold" th:text="${evento.titulo}"></td>
-                        <td th:text="${#temporals.format(evento.fecha, 'dd MMM yyyy, HH:mm')}"></td>
+
+                        <td class="ps-4">
+                            <a th:href="'/organizador/eventos/' + ${evento.id}"
+                               class="fw-semibold text-decoration-none"
+                               th:text="${evento.titulo}">
+                            </a>
+                        </td>
+
+                        <!-- Tipo -->
+                        <td>
+                            <span th:switch="${evento.tipo.name()}">
+                                <span th:case="'CHARLA'"
+                                      class="badge bg-info text-dark">Charla</span>
+                                <span th:case="'TALLER'"
+                                      class="badge bg-warning text-dark">Taller</span>
+                                <span th:case="'SEMINARIO'"
+                                      class="badge bg-primary">Seminario</span>
+                                <span th:case="'CONGRESO'"
+                                      class="badge bg-dark">Congreso</span>
+                            </span>
+                        </td>
+
+                        <!-- Fecha inicio -->
+                        <td th:text="${#temporals.format(evento.fechaInicio,
+                                'dd MMM yyyy, HH:mm')}">
+                        </td>
+
+                        <!-- Fecha fin -->
+                        <td th:text="${#temporals.format(evento.fechaFin,
+                                'dd MMM yyyy, HH:mm')}">
+                        </td>
+
                         <td th:text="${evento.lugar}"></td>
+
                         <td>
                             <span th:text="${evento.inscritosActuales}"></span> /
                             <span th:text="${evento.capacidadMax}"></span>
                         </td>
+
                         <td>
                             <span th:switch="${evento.estado.name()}">
-                                <span th:case="'PUBLICADO'" class="badge bg-success">Publicado</span>
-                                <span th:case="'BORRADOR'" class="badge bg-secondary">Borrador</span>
-                                <span th:case="'CANCELADO'" class="badge bg-danger">Cancelado</span>
+                                <span th:case="'PUBLICADO'"
+                                      class="badge bg-success">Publicado</span>
+                                <span th:case="'BORRADOR'"
+                                      class="badge bg-secondary">Borrador</span>
+                                <span th:case="'CANCELADO'"
+                                      class="badge bg-danger">Cancelado</span>
                             </span>
                         </td>
+
                         <td class="pe-4">
                             <div class="d-flex align-items-center gap-2">
-                                <!-- Grupo principal -->
                                 <div class="btn-group btn-group-sm">
-                                    <a th:href="'/organizador/eventos/' + ${evento.id} + '/editar'"
-                                       class="btn btn-outline-dark" title="Editar">
+                                    <a th:href="'/organizador/eventos/'
+                                               + ${evento.id} + '/editar'"
+                                       class="btn btn-outline-dark"
+                                       title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a th:href="'/organizador/eventos/' + ${evento.id} + '/resumen'"
-                                       class="btn btn-outline-primary" title="Resumen">
+                                    <a th:href="'/organizador/eventos/'
+                                               + ${evento.id} + '/resumen'"
+                                       class="btn btn-outline-primary"
+                                       title="Estadísticas">
                                         <i class="bi bi-bar-chart"></i>
                                     </a>
-                                    <a th:href="'/organizador/eventos/' + ${evento.id} + '/scanner'"
-                                       class="btn btn-outline-success" title="Escáner QR">
+                                    <!-- Escáner QR — solo activo si estaEnCurso() -->
+                                    <a th:if="${evento.estaEnCurso()}"
+                                       th:href="'/organizador/eventos/' + ${evento.id} + '/scanner'"
+                                       class="btn btn-outline-success"
+                                       title="Escáner QR">
                                         <i class="bi bi-qr-code-scan"></i>
                                     </a>
+                                    <button th:unless="${evento.estaEnCurso()}"
+                                            class="btn btn-outline-secondary"
+                                            disabled
+                                            th:title="${'Escáner disponible: '
+                                                + evento.getRangoFechasFormateado()}">
+                                        <i class="bi bi-qr-code-scan"></i>
+                                    </button>
                                 </div>
 
-                                <!-- Separados -->
                                 <form th:if="${evento.estado.name() == 'BORRADOR'}"
-                                      th:action="'/organizador/eventos/' + ${evento.id} + '/publicar'"
+                                      th:action="'/organizador/eventos/'
+                                              + ${evento.id} + '/publicar'"
                                       method="post" class="d-inline">
-                                    <button class="btn btn-outline-success btn-sm" title="Publicar">
+                                    <button class="btn btn-outline-success btn-sm"
+                                            title="Publicar">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                 </form>
+
                                 <form th:if="${evento.estado.name() == 'PUBLICADO'}"
-                                      th:action="'/organizador/eventos/' + ${evento.id} + '/despublicar'"
+                                      th:action="'/organizador/eventos/'
+                                              + ${evento.id} + '/despublicar'"
                                       method="post" class="d-inline">
-                                    <button class="btn btn-outline-warning btn-sm" title="Despublicar">
+                                    <button class="btn btn-outline-warning btn-sm"
+                                            title="Despublicar">
                                         <i class="bi bi-eye-slash"></i>
                                     </button>
                                 </form>
-                                <form th:unless="${evento.estado.name() == 'CANCELADO'}"
-                                      th:action="'/organizador/eventos/' + ${evento.id} + '/cancelar'"
-                                      method="post" class="d-inline confirm-form"
-                                      th:data-mensaje="'¿Cancelar el evento ' + ${evento.titulo} + '?'">
-                                    <button class="btn btn-outline-danger btn-sm" title="Cancelar">
+
+                                <form th:action="'/organizador/eventos/' + ${evento.id} + '/cancelar'"
+                                      method="post">
+
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm"
+                                            title="Cancelar evento"
+                                            data-confirm="¿Cancelar el evento [[${evento.titulo}]]?">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
+
                                 </form>
                             </div>
                         </td>
+
                     </tr>
                     </tbody>
                 </table>
@@ -117,6 +180,27 @@
             <i class="bi bi-plus-lg"></i> Crear primer evento
         </a>
     </div>
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body" id="confirmMessage">
+                    ¿Estás seguro?
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger" id="confirmAccept">Aceptar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -127,13 +211,14 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/paginacion.js"></script>
 <script src="/js/darkmode.js"></script>
+<script src="/js/confirmaciones.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         inicializarPaginacion('tablaEventosOrg', 7);
     });
 
     document.querySelectorAll('.confirm-form').forEach(form => {
-        form.addEventListener('submit', function (e) {
+        form.addEventListener('submit', function(e) {
             const msg = this.dataset.mensaje || '¿Confirmar acción?';
             if (!confirm(msg)) e.preventDefault();
         });

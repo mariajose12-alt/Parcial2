@@ -14,71 +14,126 @@
 
 <div class="container mt-4 mb-5">
 
-    <!-- Toast de feedback -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div id="toastFeedback" class="toast align-items-center text-white border-0" role="alert">
+    <!-- Toast -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
+        <div id="toastFeedback"
+             class="toast align-items-center text-white border-0" role="alert">
             <div class="d-flex">
                 <div class="toast-body fw-semibold" id="toastMensaje"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <button type="button"
+                        class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold"><i class="bi bi-ticket-perforated"></i> Mis Inscripciones</h2>
+        <h2 class="fw-bold">
+            <i class="bi bi-ticket-perforated"></i> Mis Inscripciones
+        </h2>
     </div>
 
     <!-- Con inscripciones -->
-    <div th:if="${not #lists.isEmpty(registros)}" class="row row-cols-1 row-cols-md-2 g-4">
-        <div class="col" th:each="registro : ${registros}" th:id="'card-' + ${registro.id}">
+    <div th:if="${not #lists.isEmpty(registros)}"
+         class="row row-cols-1 row-cols-md-2 g-4">
+
+        <div class="col" th:each="registro : ${registros}"
+             th:id="'card-' + ${registro.id}">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="fw-bold mb-0" th:text="${registro.evento.titulo}"></h5>
-                        <span th:if="${registro.asistenciaConfirmada}" class="badge bg-success">
+
+                    <!-- Título + estado asistencia -->
+                    <div class="d-flex justify-content-between
+                                align-items-start mb-3">
+                        <h5 class="fw-bold mb-0"
+                            th:text="${registro.evento.titulo}"></h5>
+                        <span th:if="${registro.asistenciaConfirmada}"
+                              class="badge bg-success">
                             <i class="bi bi-check-circle"></i> Asistió
                         </span>
-                        <span th:unless="${registro.asistenciaConfirmada}" class="badge bg-warning text-dark">
+                        <span th:unless="${registro.asistenciaConfirmada}"
+                              class="badge bg-warning text-dark">
                             <i class="bi bi-clock"></i> Pendiente
                         </span>
                     </div>
 
+                    <!-- Tipo -->
                     <p class="text-muted small mb-1">
-                        <i class="bi bi-calendar-event"></i>
-                        <span th:text="${#temporals.format(registro.evento.fecha, 'dd MMM yyyy, HH:mm')}"></span>
-                    </p>
-                    <p class="text-muted small mb-3">
-                        <i class="bi bi-geo-alt"></i> <span th:text="${registro.evento.lugar}"></span>
+                        <i class="bi bi-tag"></i>
+                        <span th:switch="${registro.evento.tipo.name()}">
+                            <span th:case="'CHARLA'">Charla</span>
+                            <span th:case="'TALLER'">Taller</span>
+                            <span th:case="'SEMINARIO'">Seminario</span>
+                            <span th:case="'CONGRESO'">Congreso</span>
+                        </span>
                     </p>
 
-                    <!-- QR Code -->
+                    <!-- Fecha inicio -->
+                    <p class="text-muted small mb-1">
+                        <i class="bi bi-calendar-check"></i> Inicio:
+                        <span th:text="${#temporals.format(
+                            registro.evento.fechaInicio,
+                            'dd MMM yyyy, HH:mm')}">
+                        </span>
+                    </p>
+
+                    <!-- Fecha fin -->
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar-x"></i> Fin:
+                        <span th:text="${#temporals.format(
+                            registro.evento.fechaFin,
+                            'dd MMM yyyy, HH:mm')}">
+                        </span>
+                    </p>
+
+                    <!-- Lugar -->
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-geo-alt"></i>
+                        <span th:text="${registro.evento.lugar}"></span>
+                    </p>
+
+                    <!-- QR -->
                     <div class="qr-container mb-3">
                         <p class="small fw-semibold text-muted mb-2">
-                            <i class="bi bi-qr-code"></i> Tu código QR de acceso
+                            <i class="bi bi-qr-code"></i>
+                            Tu código QR de acceso
                         </p>
                         <div th:with="qrImg=${qrImages[registro.id.toString()]}">
-                            <img th:if="${qrImg != null and !#strings.isEmpty(qrImg)}"
+                            <img th:if="${qrImg != null
+                                     and !#strings.isEmpty(qrImg)}"
                                  th:src="'data:image/png;base64,' + ${qrImg}"
-                                 alt="QR Code" class="img-fluid">
-                            <p th:unless="${qrImg != null and !#strings.isEmpty(qrImg)}"
-                               class="text-muted small">QR no disponible</p>
+                                 alt="QR Code" class="img-fluid"
+                                 style="max-width:160px;">
+                            <p th:unless="${qrImg != null
+                                       and !#strings.isEmpty(qrImg)}"
+                               class="text-muted small">
+                                QR no disponible
+                            </p>
                         </div>
-                        <p class="small text-muted mt-1">Presenta este QR el día del evento</p>
+                        <p class="small text-muted mt-1">
+                            Presenta este QR el día del evento
+                        </p>
                     </div>
 
-                    <!-- Cancelar inscripción -->
+                    <!-- Cancelar / estado -->
                     <div th:unless="${registro.asistenciaConfirmada}">
-                        <button th:if="${registro.evento.fecha.isAfter(#temporals.createNow())}"
+
+                        <!-- Evento aún no ha terminado → puede cancelar -->
+                        <button th:if="${!registro.evento.haTerminado()}"
                                 class="btn btn-outline-danger btn-sm w-100 btn-cancelar"
                                 th:data-evento-id="${registro.evento.id}"
                                 th:data-registro-id="${registro.id}">
                             <i class="bi bi-x-circle"></i> Cancelar inscripción
                         </button>
-                        <span th:unless="${registro.evento.fecha.isAfter(#temporals.createNow())}"
+
+                        <!-- Evento terminado → no puede cancelar -->
+                        <span th:if="${registro.evento.haTerminado()}"
                               class="btn btn-secondary btn-sm w-100 disabled">
-                            <i class="bi bi-lock"></i> Evento ya ocurrió
+                            <i class="bi bi-lock"></i> Evento ya finalizó
                         </span>
+
                     </div>
+
                 </div>
             </div>
         </div>
@@ -103,14 +158,13 @@
 <script>
     function mostrarToast(mensaje, exito) {
         const toast = document.getElementById('toastFeedback');
-        const msg = document.getElementById('toastMensaje');
         toast.classList.remove('bg-success', 'bg-danger');
         toast.classList.add(exito ? 'bg-success' : 'bg-danger');
-        msg.textContent = mensaje;
+        document.getElementById('toastMensaje').textContent = mensaje;
         new bootstrap.Toast(toast, { delay: 3500 }).show();
     }
 
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-cancelar');
         if (!btn) return;
         cancelarInscripcion(btn.dataset.eventoId, btn.dataset.registroId, btn);
@@ -120,7 +174,8 @@
         if (!confirm('¿Seguro que deseas cancelar esta inscripción?')) return;
 
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Cancelando...';
+        btn.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span> Cancelando...';
 
         fetch(`/api/eventos/${eventoId}/cancelar-inscripcion`, {
             method: 'POST',
@@ -133,22 +188,23 @@
                     const card = document.getElementById('card-' + registroId);
                     if (card) {
                         card.style.transition = 'opacity 0.4s';
-                        card.style.opacity = '0';
+                        card.style.opacity    = '0';
                         setTimeout(() => card.remove(), 400);
                     }
                 } else {
                     mostrarToast(data.error || 'Error al cancelar', false);
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-x-circle"></i> Cancelar inscripción';
+                    btn.innerHTML =
+                        '<i class="bi bi-x-circle"></i> Cancelar inscripción';
                 }
             })
             .catch(() => {
                 mostrarToast('Error de conexión', false);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-x-circle"></i> Cancelar inscripción';
+                btn.innerHTML =
+                    '<i class="bi bi-x-circle"></i> Cancelar inscripción';
             });
     }
 </script>
-
 </body>
 </html>

@@ -10,6 +10,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
@@ -58,7 +59,7 @@ public class RegistroService {
     public String cancelarInscripcion(Usuario participante, Long eventoId) {
         Evento evento = eventoDAO.buscarPorId(eventoId);
         if (evento == null) return "Evento no encontrado";
-        if (evento.getFecha().isBefore(LocalDateTime.now())) return "No puedes cancelar después de la fecha del evento";
+        if (evento.getFechaFin().isBefore(LocalDateTime.now())) return "No puedes cancelar después de la fecha del evento";
 
         List<Registro> registros = registroDAO.listarPorUsuario(participante.getId());
         Registro registro = registros.stream()
@@ -74,18 +75,26 @@ public class RegistroService {
     }
 
     public String marcarAsistencia(String token, Usuario organizador) {
+
         Registro registro = registroDAO.buscarPorToken(token);
         if (registro == null) return "QR inválido";
-        if (registro.isAsistenciaConfirmada()) return "Asistencia ya registrada";
+
+        LocalDate hoy = LocalDate.now();
+
+        if (registro.getFechaAsistencia() != null &&
+                registro.getFechaAsistencia().toLocalDate().equals(hoy)) {
+            return "Ya se registró asistencia hoy";
+        }
 
         registro.setAsistenciaConfirmada(true);
         registro.setFechaAsistencia(LocalDateTime.now());
         registro.setQuienConfirmaAsistencia(organizador);
+
         registroDAO.actualizar(registro);
         return null;
     }
 
-    public List<Registro> listarPorEvento(Long eventoId) {
+    public static List<Registro> listarPorEvento(Long eventoId) {
         return registroDAO.listarPorEvento(eventoId);
     }
 
@@ -106,4 +115,5 @@ public class RegistroService {
         ImageIO.write(image, "png", baos);
         return Base64.getEncoder().encodeToString(baos.toByteArray());
     }
+
 }

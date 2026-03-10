@@ -14,8 +14,26 @@
 
 <div class="container mt-4 mb-5">
 
+    <!-- Flash messages -->
+    <div th:if="${flashSuccess}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${flashSuccess}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${flashError}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle-fill me-2"></i>
+        <span th:text="${flashError}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold"><i class="bi bi-people"></i> Gestión de Usuarios</h2>
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-people"></i> Gestión de Usuarios
+        </h2>
+        <button class="btn btn-primary"
+                onclick="abrirOffcanvasCrear()">
+            <i class="bi bi-person-plus"></i> Crear Usuario
+        </button>
     </div>
 
     <!-- Filtros -->
@@ -24,7 +42,8 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label fw-semibold small">Filtrar por rol</label>
-                    <select class="form-select form-select-sm" id="filtroRol" onchange="filtrarUsuarios()">
+                    <select class="form-select form-select-sm" id="filtroRol"
+                            onchange="filtrarUsuarios()">
                         <option value="">Todos los roles</option>
                         <option value="ADMINISTRADOR">Administrador</option>
                         <option value="ORGANIZADOR">Organizador</option>
@@ -32,20 +51,26 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold small">Buscar por nombre o email</label>
-                    <input type="text" class="form-control form-control-sm" id="filtroBusqueda"
-                           placeholder="Escribe para buscar..." oninput="filtrarUsuarios()">
+                    <label class="form-label fw-semibold small">
+                        Buscar por nombre o email
+                    </label>
+                    <input type="text" class="form-control form-control-sm"
+                           id="filtroBusqueda"
+                           placeholder="Escribe para buscar..."
+                           oninput="filtrarUsuarios()">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-semibold small">Estado</label>
-                    <select class="form-select form-select-sm" id="filtroEstado" onchange="filtrarUsuarios()">
+                    <select class="form-select form-select-sm" id="filtroEstado"
+                            onchange="filtrarUsuarios()">
                         <option value="">Todos</option>
                         <option value="activo">Activo</option>
                         <option value="bloqueado">Bloqueado</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="limpiarFiltros()">
+                    <button class="btn btn-outline-secondary btn-sm w-100"
+                            onclick="limpiarFiltros()">
                         <i class="bi bi-x-lg"></i> Limpiar
                     </button>
                 </div>
@@ -53,17 +78,19 @@
         </div>
     </div>
 
+    <!-- Tabla -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="tablaUsuarios">
-                    <thead>
+            <div class="table-responsive overflow-visible">
+                <table class="table table-hover align-middle mb-0"
+                       id="tablaUsuarios">
+                    <thead class="table-light">
                     <tr>
                         <th class="ps-4">Usuario</th>
                         <th>Email</th>
                         <th>Rol</th>
                         <th>Estado</th>
-                        <th class="pe-4">Acciones</th>
+                        <th class="pe-4 text-end">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -73,74 +100,294 @@
                         th:data-nombre="${u.nombre + ' ' + u.apellido}"
                         th:data-email="${u.email}"
                         th:data-estado="${u.activo ? 'activo' : 'bloqueado'}">
+
                         <td class="ps-4 fw-semibold">
                             <i class="bi bi-person-circle text-muted me-2"></i>
                             <span th:text="${u.nombre + ' ' + u.apellido}"></span>
                         </td>
                         <td class="text-muted" th:text="${u.email}"></td>
                         <td>
-                            <span th:switch="${u.rol.name()}">
-                                <span th:case="'ADMINISTRADOR'" class="badge bg-dark">
-                                    <i class="bi bi-shield-lock"></i> Administrador
+                                <span th:switch="${u.rol.name()}">
+                                    <span th:case="'ADMINISTRADOR'"
+                                          class="badge bg-dark">
+                                        <i class="bi bi-shield-lock"></i> Administrador
+                                    </span>
+                                    <span th:case="'ORGANIZADOR'"
+                                          class="badge bg-primary">
+                                        <i class="bi bi-gear"></i> Organizador
+                                    </span>
+                                    <span th:case="'PARTICIPANTE'"
+                                          class="badge bg-secondary">
+                                        <i class="bi bi-person"></i> Participante
+                                    </span>
                                 </span>
-                                <span th:case="'ORGANIZADOR'" class="badge bg-primary">
-                                    <i class="bi bi-gear"></i> Organizador
-                                </span>
-                                <span th:case="'PARTICIPANTE'" class="badge bg-secondary">
-                                    <i class="bi bi-person"></i> Participante
-                                </span>
-                            </span>
                         </td>
                         <td>
-                            <span th:if="${u.activo}" class="badge bg-success">Activo</span>
-                            <span th:unless="${u.activo}" class="badge bg-danger">Bloqueado</span>
+                                <span th:if="${u.activo}"
+                                      class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Activo
+                                </span>
+                            <span th:unless="${u.activo}"
+                                  class="badge bg-danger">
+                                    <i class="bi bi-slash-circle"></i> Bloqueado
+                                </span>
                         </td>
-                        <td class="pe-4">
-                            <span th:if="${u.rol.name() == 'ADMINISTRADOR'}" class="text-muted small">
-                                <i class="bi bi-lock-fill"></i> Protegido
-                            </span>
-                            <div th:unless="${u.rol.name() == 'ADMINISTRADOR'}" class="d-flex flex-wrap gap-2">
-                                <form th:if="${u.rol.name() == 'PARTICIPANTE'}"
-                                      th:action="'/admin/usuarios/' + ${u.id} + '/organizador'"
-                                      method="post" class="d-inline">
-                                    <button class="btn btn-outline-primary btn-sm">
-                                        <i class="bi bi-arrow-up-circle"></i> Organizador
-                                    </button>
-                                </form>
-                                <form th:if="${u.rol.name() == 'ORGANIZADOR'}"
-                                      th:action="'/admin/usuarios/' + ${u.id} + '/revocar'"
-                                      method="post" class="d-inline">
-                                    <button class="btn btn-outline-secondary btn-sm">
-                                        <i class="bi bi-arrow-down-circle"></i> Revocar
-                                    </button>
-                                </form>
-                                <form th:if="${u.activo}"
-                                      th:action="'/admin/usuarios/' + ${u.id} + '/bloquear'"
-                                      method="post" class="d-inline confirm-form"
-                                      th:data-mensaje="'¿Bloquear a ' + ${u.nombre} + '?'">
-                                    <button class="btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-lock"></i> Bloquear
-                                    </button>
-                                </form>
-                                <form th:unless="${u.activo}"
-                                      th:action="'/admin/usuarios/' + ${u.id} + '/desbloquear'"
-                                      method="post" class="d-inline">
-                                    <button class="btn btn-outline-success btn-sm">
-                                        <i class="bi bi-unlock"></i> Desbloquear
-                                    </button>
-                                </form>
+                        <td class="pe-4 text-end">
+                            <!-- Admin protegido -->
+                            <span th:if="${u.rol.name() == 'ADMINISTRADOR'}"
+                                  class="text-muted small">
+                                    <i class="bi bi-lock-fill"></i> Protegido
+                                </span>
+
+                            <!-- Menú 3 puntos para no-admin -->
+                            <div th:unless="${u.rol.name() == 'ADMINISTRADOR'}"
+                                 class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm"
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+
+                                    <!-- Editar -->
+                                    <li>
+                                        <a class="dropdown-item" href="#" th:attr="data-id=${u.id}, data-nombre=${u.nombre}, data-apellido=${u.apellido}, data-email=${u.email}, data-rol=${u.rol.name()}" onclick="abrirEditar(this)">
+                                            <i class="bi bi-pencil text-primary"></i>
+                                            Editar
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+
+                                    <!-- Promover / Revocar -->
+                                    <li th:if="${u.rol.name() == 'PARTICIPANTE'}">
+                                        <form th:action="'/admin/usuarios/' + ${u.id} + '/organizador'"
+                                              method="post" class="d-inline">
+                                            <button class="dropdown-item">
+                                                <i class="bi bi-arrow-up-circle text-primary"></i>
+                                                Dar Organizador
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li th:if="${u.rol.name() == 'ORGANIZADOR'}">
+                                        <form th:action="'/admin/usuarios/' + ${u.id} + '/revocar'"
+                                              method="post" class="d-inline">
+                                            <button class="dropdown-item">
+                                                <i class="bi bi-arrow-down-circle text-secondary"></i>
+                                                Revocar Organizador
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+
+                                    <!-- Bloquear / Desbloquear -->
+                                    <li th:if="${u.activo}">
+                                        <form th:action="'/admin/usuarios/' + ${u.id} + '/bloquear'"
+                                              method="post"
+                                              class="d-inline confirm-form"
+                                              th:data-mensaje="'¿Bloquear a ' + ${u.nombre} + '?'">
+                                            <button class="dropdown-item text-danger">
+                                                <i class="bi bi-lock"></i> Bloquear
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li th:unless="${u.activo}">
+                                        <form th:action="'/admin/usuarios/' + ${u.id} + '/desbloquear'"
+                                              method="post" class="d-inline">
+                                            <button class="dropdown-item text-success">
+                                                <i class="bi bi-unlock"></i> Desbloquear
+                                            </button>
+                                        </form>
+                                    </li>
+
+                                </ul>
                             </div>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(usuarios)}">
-                        <td colspan="5" class="text-center text-muted py-4">No hay usuarios registrados.</td>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No hay usuarios registrados.
+                        </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+</div>
 
+<!-- ═══ OFFCANVAS CREAR / EDITAR ═══ -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="usuarioOffcanvas"
+     style="width:420px;">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="offcanvastitulo">Crear Usuario</h5>
+        <button type="button" class="btn-close"
+                data-bs-dismiss="offcanvas"></button>
+    </div>
+
+    <div class="offcanvas-body">
+
+        <!-- Avatar preview -->
+        <div class="text-center mb-4">
+            <div id="avatarPreview"
+                 style="width:72px;height:72px;border-radius:50%;
+                        background:#0d6efd;color:white;font-size:26px;
+                        font-weight:700;display:flex;align-items:center;
+                        justify-content:center;margin:0 auto;">
+                ?
+            </div>
+            <div id="avatarNombre" class="text-muted mt-2"
+                 style="font-size:13px;">
+                Nuevo usuario
+            </div>
+        </div>
+
+        <!-- Alerta de error en offcanvas -->
+        <div id="offcanvasAlerta" class="alert alert-danger d-none mb-3"
+             style="font-size:13px;"></div>
+
+        <!-- FORM CREAR -->
+        <form id="formCrear" method="post" action="/admin/usuarios/crear"
+              class="d-none">
+            <div class="row g-3">
+                <div class="col-6">
+                    <label class="form-label fw-semibold small">Nombre *</label>
+                    <input type="text" name="nombre" id="crearNombre"
+                           class="form-control" placeholder="Juan"
+                           oninput="actualizarAvatar('crear')" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-semibold small">Apellido *</label>
+                    <input type="text" name="apellido" id="crearApellido"
+                           class="form-control" placeholder="Pérez"
+                           oninput="actualizarAvatar('crear')" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">Email *</label>
+                    <input type="email" name="email" id="crearEmail"
+                           class="form-control"
+                           placeholder="usuario@pucmm.edu.do" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">Rol *</label>
+                    <select name="rol" id="crearRol" class="form-select">
+                        <option value="PARTICIPANTE">Participante</option>
+                        <option value="ORGANIZADOR">Organizador</option>
+                        <option value="ADMINISTRADOR">Administrador</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">
+                        Contraseña *
+                    </label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="crearPassword"
+                               class="form-control"
+                               placeholder="Mínimo 8 caracteres" required>
+                        <button class="btn btn-outline-secondary" type="button"
+                                onclick="togglePassword('crearPassword', 'eyeCrear')">
+                            <i class="bi bi-eye" id="eyeCrear"></i>
+                        </button>
+                    </div>
+                    <div class="form-text">Mínimo 8 caracteres</div>
+                </div>
+            </div>
+            <div class="mt-4 d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-outline-secondary"
+                        data-bs-dismiss="offcanvas">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary"
+                        onclick="return validarFormCrear()">
+                    <i class="bi bi-person-plus"></i> Crear Usuario
+                </button>
+            </div>
+        </form>
+
+        <!-- FORM EDITAR -->
+        <form id="formEditar" method="post" action="#" class="d-none">
+            <input type="hidden" name="usuarioId" id="editarId">
+            <div class="row g-3">
+                <div class="col-6">
+                    <label class="form-label fw-semibold small">Nombre *</label>
+                    <input type="text" name="nombre" id="editarNombre"
+                           class="form-control"
+                           oninput="actualizarAvatar('editar')" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-semibold small">Apellido *</label>
+                    <input type="text" name="apellido" id="editarApellido"
+                           class="form-control"
+                           oninput="actualizarAvatar('editar')" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">Email *</label>
+                    <input type="email" name="email" id="editarEmail"
+                           class="form-control" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">Rol *</label>
+                    <select name="rol" id="editarRol" class="form-select">
+                        <option value="PARTICIPANTE">Participante</option>
+                        <option value="ORGANIZADOR">Organizador</option>
+                        <option value="ADMINISTRADOR">Administrador</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">
+                        Nueva Contraseña
+                    </label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="editarPassword"
+                               class="form-control"
+                               placeholder="Dejar en blanco para no cambiar">
+                        <button class="btn btn-outline-secondary" type="button"
+                                onclick="togglePassword('editarPassword', 'eyeEditar')">
+                            <i class="bi bi-eye" id="eyeEditar"></i>
+                        </button>
+                    </div>
+                    <div class="form-text text-info">
+                        <i class="bi bi-info-circle"></i>
+                        Dejar en blanco para mantener la contraseña actual
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-outline-secondary"
+                        data-bs-dismiss="offcanvas">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary"
+                        onclick="return validarFormEditar()">
+                    <i class="bi bi-check-lg"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<!-- Modal confirmar bloqueo -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                    Confirmar acción
+                </h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirmModalText">
+                ¿Confirmar acción?
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                        data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger"
+                        id="confirmModalBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <footer class="bg-dark text-light text-center py-3 mt-auto">
@@ -152,95 +399,162 @@
 <script src="/js/darkmode.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-
         inicializarPaginacion('tablaUsuarios', 7);
 
+        // Confirm modal para bloquear
         let formToSubmit = null;
-
         document.querySelectorAll('.confirm-form').forEach(form => {
-            form.addEventListener('submit', function (e) {
-
+            form.addEventListener('submit', function(e) {
                 e.preventDefault();
-
                 formToSubmit = this;
-
-                const msg = this.dataset.mensaje || '¿Confirmar acción?';
-                document.getElementById('confirmModalText').innerText = msg;
-
-                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
-                modal.show();
+                document.getElementById('confirmModalText').innerText =
+                    this.dataset.mensaje || '¿Confirmar acción?';
+                new bootstrap.Modal(document.getElementById('confirmModal')).show();
             });
         });
-
         document.getElementById('confirmModalBtn').addEventListener('click', () => {
-            if (formToSubmit) {
-                formToSubmit.submit();
-            }
+            if (formToSubmit) formToSubmit.submit();
         });
-
     });
 
+    // ─── Offcanvas ───
+    function abrirOffcanvasCrear() {
+        document.getElementById('offcanvastitulo').textContent = 'Crear Usuario';
+        document.getElementById('formCrear').classList.remove('d-none');
+        document.getElementById('formEditar').classList.add('d-none');
+        document.getElementById('formCrear').reset();
+        document.getElementById('avatarPreview').textContent = '?';
+        document.getElementById('avatarNombre').textContent  = 'Nuevo usuario';
+        document.getElementById('avatarPreview').style.background = '#0d6efd';
+        document.getElementById('offcanvasAlerta').classList.add('d-none');
+        new bootstrap.Offcanvas(document.getElementById('usuarioOffcanvas')).show();
+    }
+
+    function abrirEditar(btn) {
+        abrirOffcanvasEditar(
+            btn.dataset.id,
+            btn.dataset.nombre,
+            btn.dataset.apellido,
+            btn.dataset.email,
+            btn.dataset.rol
+        );
+    }
+
+    function abrirOffcanvasEditar(id, nombre, apellido, email, rol) {
+        document.getElementById('offcanvastitulo').textContent = 'Editar Usuario';
+        document.getElementById('formCrear').classList.add('d-none');
+        document.getElementById('formEditar').classList.remove('d-none');
+        document.getElementById('offcanvasAlerta').classList.add('d-none');
+
+        // Rellenar campos
+        document.getElementById('editarId').value       = id;
+        document.getElementById('editarNombre').value   = nombre;
+        document.getElementById('editarApellido').value = apellido;
+        document.getElementById('editarEmail').value    = email;
+        document.getElementById('editarRol').value      = rol;
+        document.getElementById('editarPassword').value = '';
+
+        // Actualizar acción del form
+        document.getElementById('formEditar').action =
+            '/admin/usuarios/' + id + '/editar';
+
+        // Avatar
+        const iniciales = (nombre.charAt(0) + apellido.charAt(0)).toUpperCase();
+        document.getElementById('avatarPreview').textContent       = iniciales;
+        document.getElementById('avatarNombre').textContent        = nombre + ' ' + apellido;
+        document.getElementById('avatarPreview').style.background  = getColorRol(rol);
+
+        new bootstrap.Offcanvas(document.getElementById('usuarioOffcanvas')).show();
+    }
+
+    // ─── Avatar dinámico ───
+    function actualizarAvatar(modo) {
+        const nombre   = document.getElementById(modo + 'Nombre').value.trim();
+        const apellido = document.getElementById(modo + 'Apellido').value.trim();
+        const rol      = document.getElementById(modo + 'Rol').value;
+        const preview  = document.getElementById('avatarPreview');
+        const nameEl   = document.getElementById('avatarNombre');
+
+        if (nombre || apellido) {
+            preview.textContent      = ((nombre[0] || '') + (apellido[0] || '')).toUpperCase() || '?';
+            nameEl.textContent       = (nombre + ' ' + apellido).trim();
+            preview.style.background = getColorRol(rol);
+        } else {
+            preview.textContent = '?';
+            nameEl.textContent  = 'Nuevo usuario';
+        }
+    }
+
+    // ─── Toggle contraseña ───
+    function togglePassword(inputId, iconId) {
+        const input  = document.getElementById(inputId);
+        const icon   = document.getElementById(iconId);
+        const isText = input.type === 'text';
+        input.type   = isText ? 'password' : 'text';
+        icon.className = isText ? 'bi bi-eye' : 'bi bi-eye-slash';
+    }
+
+    // ─── Validaciones ───
+    function validarFormCrear() {
+        const password = document.getElementById('crearPassword').value;
+        if (password.length < 8) {
+            mostrarAlertaOffcanvas('La contraseña debe tener mínimo 8 caracteres');
+            return false;
+        }
+        return true;
+    }
+
+    function validarFormEditar() {
+        const password = document.getElementById('editarPassword').value;
+        if (password && password.length < 8) {
+            mostrarAlertaOffcanvas('La contraseña debe tener mínimo 8 caracteres');
+            return false;
+        }
+        return true;
+    }
+
+    function mostrarAlertaOffcanvas(mensaje) {
+        const el = document.getElementById('offcanvasAlerta');
+        el.textContent = mensaje;
+        el.classList.remove('d-none');
+    }
+
+    // ─── Filtros ───
     function filtrarUsuarios() {
-        const rol = document.getElementById('filtroRol').value.toLowerCase();
+        const rol      = document.getElementById('filtroRol').value.toLowerCase();
         const busqueda = document.getElementById('filtroBusqueda').value.toLowerCase();
-        const estado = document.getElementById('filtroEstado').value.toLowerCase();
+        const estado   = document.getElementById('filtroEstado').value.toLowerCase();
 
         document.querySelectorAll('#tablaUsuarios tbody tr[data-rol]').forEach(fila => {
-            const filRol = fila.dataset.rol.toLowerCase();
-            const filNombre = fila.dataset.nombre.toLowerCase();
-            const filEmail = fila.dataset.email.toLowerCase();
-            const filEstado = fila.dataset.estado.toLowerCase();
-
-            const coincideRol = !rol || filRol === rol;
-            const coincideBusqueda = !busqueda || filNombre.includes(busqueda) || filEmail.includes(busqueda);
-            const coincideEstado = !estado || filEstado === estado;
-
+            const coincideRol      = !rol      || fila.dataset.rol.toLowerCase()    === rol;
+            const coincideBusqueda = !busqueda || fila.dataset.nombre.toLowerCase().includes(busqueda)
+                || fila.dataset.email.toLowerCase().includes(busqueda);
+            const coincideEstado   = !estado   || fila.dataset.estado.toLowerCase() === estado;
             const visible = coincideRol && coincideBusqueda && coincideEstado;
             fila.style.display = visible ? '' : 'none';
-            if (visible) {
-                fila.setAttribute('data-paginar', 'true');
-            } else {
-                fila.removeAttribute('data-paginar');
-            }
+            visible
+                ? fila.setAttribute('data-paginar', 'true')
+                : fila.removeAttribute('data-paginar');
         });
 
         reiniciarPaginacion('tablaUsuarios', 7);
     }
 
     function limpiarFiltros() {
-        document.getElementById('filtroRol').value = '';
+        document.getElementById('filtroRol').value      = '';
         document.getElementById('filtroBusqueda').value = '';
-        document.getElementById('filtroEstado').value = '';
+        document.getElementById('filtroEstado').value   = '';
         filtrarUsuarios();
     }
+
+    function getColorRol(rol) {
+        const colores = {
+            ADMINISTRADOR: '#212529',
+            ORGANIZADOR:   '#0d6efd',
+            PARTICIPANTE:  '#6c757d'
+        };
+        return colores[rol] || '#6c757d';
+    }
 </script>
-<div class="modal fade" id="confirmModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle text-warning"></i>
-                    Confirmar acción
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body" id="confirmModalText">
-                ¿Confirmar acción?
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">
-                    Cancelar
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmModalBtn">
-                    Confirmar
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
 </body>
 </html>
