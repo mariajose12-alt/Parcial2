@@ -10,13 +10,7 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="/">
-            <i class="bi bi-calendar-event-fill text-warning"></i> Eventos PUCMM
-        </a>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar(${usuario})}"></div>
 
 <div class="container mt-4 mb-5">
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -59,17 +53,23 @@
                             <label class="form-label fw-semibold">Contraseña</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" name="password"
-                                       id="passwordInput" required minlength="6">
+                                       id="passwordInput" required minlength="8" placeholder="Mínimo 8 caracteres">
                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                     <i class="bi bi-eye"></i>
                                 </button>
                             </div>
-                            <div class="invalid-feedback">Mínimo 6 caracteres.</div>
+                            <div class="form-text">
+                                La contraseña debe tener al menos 8 caracteres.
+                            </div>
+
+                            <div class="invalid-feedback">
+                                La contraseña debe tener mínimo 8 caracteres.
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Confirmar contraseña</label>
                             <input type="password" class="form-control" name="confirmarPassword"
-                                   id="confirmarPassword">
+                                   id="confirmarPassword" required minlength="8">
                             <div class="invalid-feedback" id="passwordError">Las contraseñas no coinciden.</div>
                         </div>
                         <div class="d-grid mt-4">
@@ -98,7 +98,7 @@
         const pass = document.getElementById('passwordInput').value;
         const confirm = document.getElementById('confirmarPassword').value;
 
-        if (pass.length < 6) {
+        if (pass.length < 8) {
             e.preventDefault();
             document.getElementById('passwordInput').classList.add('is-invalid');
             document.querySelector('#passwordInput ~ .invalid-feedback') &&
@@ -123,13 +123,19 @@
     });
 
     document.getElementById('togglePassword').addEventListener('click', function () {
-        const input = document.getElementById('passwordInput');
+
+        const pass = document.getElementById('passwordInput');
+        const confirm = document.getElementById('confirmarPassword');
         const icon = this.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
+
+        const type = pass.type === 'password' ? 'text' : 'password';
+
+        pass.type = type;
+        confirm.type = type;
+
+        if (type === 'text') {
             icon.classList.replace('bi-eye', 'bi-eye-slash');
         } else {
-            input.type = 'password';
             icon.classList.replace('bi-eye-slash', 'bi-eye');
         }
     });

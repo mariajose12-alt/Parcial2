@@ -5,6 +5,7 @@ import com.pucmm.csti19105488.model.CodigoQR;
 import com.pucmm.csti19105488.model.Evento;
 import com.pucmm.csti19105488.model.Registro;
 import com.pucmm.csti19105488.model.Usuario;
+import com.pucmm.csti19105488.model.enums.TipoUsuario;
 import com.pucmm.csti19105488.service.EstadisticaService;
 import com.pucmm.csti19105488.service.EventoService;
 import com.pucmm.csti19105488.service.RegistroService;
@@ -27,7 +28,11 @@ public class RegistroController {
         // Inscribirse a evento (Fetch API)
         post("/api/eventos/{id}/inscribir", ctx -> {
             Usuario u = ctx.sessionAttribute("usuario");
-            if (!UsuarioController.estaAutenticado(ctx) && !u.getRol().equals("PARTICIPANTE")) { ctx.status(401).result("No autenticado"); return; }
+
+            if (u == null || u.getRol() != TipoUsuario.PARTICIPANTE) {
+                ctx.status(401).result("No autorizado");
+                return;
+            }
 
             String error = registroService.inscribir(u, Long.parseLong(ctx.pathParam("id")));
             if (error != null) {
@@ -41,7 +46,7 @@ public class RegistroController {
         post("/api/eventos/{id}/cancelar-inscripcion", ctx -> {
             Usuario u = ctx.sessionAttribute("usuario");
             if (u == null) { ctx.status(401).json(Map.of("error", "No autenticado")); return; }
-            Long eventoId = Long.parseLong(ctx.pathParam("eventoId"));
+            Long eventoId = Long.parseLong(ctx.pathParam("id"));
             Evento evento = EventoService.buscarPorId(eventoId);
 
             if (evento == null) {
@@ -71,8 +76,7 @@ public class RegistroController {
 
             Usuario usuario = ctx.sessionAttribute("usuario");
 
-            Map<String, String> body = ctx.bodyAsClass(Map.class);
-            String token = body.get("token");
+            String token = ctx.bodyAsClass(Map.class).get("token").toString();
 
             String error = registroService.marcarAsistencia(token, usuario);
 

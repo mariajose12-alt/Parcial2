@@ -6,7 +6,7 @@ import com.pucmm.csti19105488.service.RegistroService;
 import com.pucmm.csti19105488.service.UsuarioService;
 import com.pucmm.csti19105488.model.enums.TipoUsuario;
 import io.javalin.http.Context;
-
+import org.mindrot.jbcrypt.BCrypt;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -102,7 +102,16 @@ public class UsuarioController {
             String password = ctx.formParam("password");
             String rol      = ctx.formParam("rol");
 
-            String error = UsuarioService.crearComoAdmin(nombre, apellido, email, password, rol);
+            if (password == null || password.trim().length() < 8) {
+                ctx.sessionAttribute("flashError", "La contraseña debe tener mínimo 8 caracteres");
+                ctx.redirect("/admin/usuarios");
+                return;
+            }
+
+
+            String hash = BCrypt.hashpw(password, BCrypt.gensalt());
+            String error = UsuarioService.crearComoAdmin(nombre, apellido, email, hash, rol);
+
             if (error != null) {
                 ctx.sessionAttribute("flashError", error);
             } else {
@@ -162,9 +171,21 @@ public class UsuarioController {
         post("/perfil/password", ctx -> {
             Usuario u = ctx.sessionAttribute("usuario");
             if (u == null) { ctx.redirect("/login"); return; }
+
             try {
-                UsuarioDAO.cambiarPassword(u.getId(), ctx.formParam("passwordNueva"));
+                String nueva = ctx.formParam("passwordNueva");
+
+                if(nueva == null || nueva.trim().length() < 8){
+                    ctx.redirect("/perfil?error=La contraseña debe tener mínimo 8 caracteres");
+                    return;
+                }
+
+                String hash = BCrypt.hashpw(nueva, BCrypt.gensalt());
+
+                UsuarioDAO.cambiarPassword(u.getId(), hash);
+
                 ctx.redirect("/perfil?mensaje=Contraseña actualizada correctamente");
+
             } catch (Exception e) {
                 ctx.redirect("/perfil?error=Error al cambiar la contraseña");
             }
@@ -180,6 +201,10 @@ public class UsuarioController {
                     byte[] bytes = uploadedFile.content().readAllBytes();
                     String base64 = Base64.getEncoder().encodeToString(bytes);
                     String mimeType = uploadedFile.contentType();
+                    if(!mimeType.startsWith("image/")){
+                        ctx.redirect("/perfil?error=Archivo inválido");
+                        return;
+                    }
                     String fotoBase64 = "data:" + mimeType + ";base64," + base64;
                     UsuarioDAO.actualizarFoto(u.getId(), fotoBase64);
                     u.setFotoBase64(fotoBase64);
@@ -213,17 +238,32 @@ public class UsuarioController {
     }
 
     private void registro(Context ctx) {
+
         String nombre = ctx.formParam("nombre");
         String apellido = ctx.formParam("apellido");
         String email = ctx.formParam("email");
         String password = ctx.formParam("password");
-        String error = usuarioService.registrar(nombre, apellido, email, password);
-        if (error != null) {
-            Map<String, Object> model = new HashMap<>();
-            model.put("error", error);
+
+        Map<String, Object> model = new HashMap<>();
+
+        // validar longitud mínima
+        if(password == null || password.trim().length() < 8){
+            model.put("error", "La contraseña debe tener mínimo 8 caracteres");
             ctx.render("/registro.html", model);
             return;
         }
+
+        String error = usuarioService.registrar(nombre, apellido, email, password);
+
+        if (error != null) {
+            model.put("error", error);
+            model.put("nombre", nombre);
+            model.put("apellido", apellido);
+            model.put("email", email);
+            ctx.render("/registro.html", model);
+            return;
+        }
+
         ctx.redirect("/login");
     }
 

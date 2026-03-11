@@ -10,13 +10,7 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="/">
-            <i class="bi bi-calendar-event-fill text-warning"></i> Eventos PUCMM
-        </a>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar(${usuario})}"></div>
 
 <div class="container mt-4 mb-5">
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">

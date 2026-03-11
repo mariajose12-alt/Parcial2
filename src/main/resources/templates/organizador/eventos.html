@@ -52,7 +52,7 @@
                     <tbody>
                     <tr th:each="evento : ${eventos}" data-paginar="true">
 
-                        <td class="ps-4">
+                        <td class="ps-4" data-label="Título">
                             <a th:href="'/organizador/eventos/' + ${evento.id}"
                                class="fw-semibold text-decoration-none"
                                th:text="${evento.titulo}">
@@ -60,7 +60,7 @@
                         </td>
 
                         <!-- Tipo -->
-                        <td>
+                        <td data-label="Tipo">
                             <span th:switch="${evento.tipo.name()}">
                                 <span th:case="'CHARLA'"
                                       class="badge bg-info text-dark">Charla</span>
@@ -74,23 +74,21 @@
                         </td>
 
                         <!-- Fecha inicio -->
-                        <td th:text="${#temporals.format(evento.fechaInicio,
-                                'dd MMM yyyy, HH:mm')}">
+                        <td data-label="Inicio" th:text="${#temporals.format(evento.fechaInicio, 'dd MMM yyyy, HH:mm')}">
                         </td>
 
                         <!-- Fecha fin -->
-                        <td th:text="${#temporals.format(evento.fechaFin,
-                                'dd MMM yyyy, HH:mm')}">
+                        <td data-label="Fin" th:text="${#temporals.format(evento.fechaFin, 'dd MMM yyyy, HH:mm')}">
                         </td>
 
-                        <td th:text="${evento.lugar}"></td>
+                        <td data-label="Lugar" th:text="${evento.lugar}"></td>
 
-                        <td>
+                        <td data-label="Cupo">
                             <span th:text="${evento.inscritosActuales}"></span> /
                             <span th:text="${evento.capacidadMax}"></span>
                         </td>
 
-                        <td>
+                        <td data-label="Estado">
                             <span th:switch="${evento.estado.name()}">
                                 <span th:case="'PUBLICADO'"
                                       class="badge bg-success">Publicado</span>
@@ -101,7 +99,7 @@
                             </span>
                         </td>
 
-                        <td class="pe-4">
+                        <td class="pe-4" data-label="Acciones">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="btn-group btn-group-sm">
                                     <a th:href="'/organizador/eventos/'
