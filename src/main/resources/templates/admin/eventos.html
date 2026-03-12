@@ -30,6 +30,52 @@
         </a>
     </div>
 
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-3" id="filtrosCard">
+        <div class="card-body py-3">
+            <div class="row g-2 align-items-end"> <!-- Búsqueda libre -->
+                <div class="col-12 col-md-4"><label class="form-label fw-semibold small text-muted mb-1"> <i
+                        class="bi bi-search"></i> Buscar </label> <input type="text" id="filtroBusqueda"
+                                                                         class="form-control form-control-sm"
+                                                                         placeholder="Título o lugar…"></div>
+                <!-- Tipo -->
+                <div class="col-6 col-md-2"><label class="form-label fw-semibold small text-muted mb-1"> <i
+                        class="bi bi-tag"></i> Tipo </label>
+                    <select id="filtroTipo" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="CHARLA">Charla</option>
+                    <option value="TALLER">Taller</option>
+                    <option value="SEMINARIO">Seminario</option>
+                    <option value="CONGRESO">Congreso</option>
+                </select></div> <!-- Estado -->
+                <div class="col-6 col-md-2"><label class="form-label fw-semibold small text-muted mb-1"> <i
+                        class="bi bi-circle-half"></i> Estado </label> <select id="filtroEstado"
+                                                                               class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="PUBLICADO">Publicado</option>
+                    <option value="BORRADOR">Borrador</option>
+                    <option value="CANCELADO">Cancelado</option>
+                </select></div> <!-- Desde -->
+                <div class="col-6 col-md-2"><label class="form-label fw-semibold small text-muted mb-1"> <i
+                        class="bi bi-calendar-event"></i> Desde </label> <input type="date" id="filtroDesde"
+                                                                                class="form-control form-control-sm">
+                </div> <!-- Hasta -->
+                <div class="col-6 col-md-2"><label class="form-label fw-semibold small text-muted mb-1"> <i
+                        class="bi bi-calendar-check"></i> Hasta </label> <input type="date" id="filtroHasta"
+                                                                                class="form-control form-control-sm">
+                </div>
+            </div> <!-- Conteo + limpiar -->
+            <div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"> Mostrando
+                <span id="conteoFiltrados" class="fw-semibold text-dark">–</span> de <span id="conteoTotal"
+                                                                                           class="fw-semibold text-dark">–</span>
+                evento(s) </small>
+                <button id="btnLimpiarFiltros" class="btn btn-link btn-sm text-secondary p-0" style="display:none"><i
+                        class="bi bi-x-circle"></i> Limpiar filtros
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div th:if="${not #lists.isEmpty(eventos)}" class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -45,14 +91,22 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="evento : ${eventos}" data-paginar="true">
+                    <tr th:each="evento : ${eventos}" data-paginar="true"
+                        th:data-titulo="${evento.titulo}"
+                        th:data-lugar="${evento.lugar}"
+                        th:data-tipo="${evento.tipo.name()}"
+                        th:data-estado="${evento.estado.name()}"
+                        th:data-fecha="${#temporals.format(evento.fechaInicio,'yyyy-MM-dd')}">
+
+
                         <td class="ps-4" data-label="Titulo">
                             <a th:href="'/organizador/eventos/' + ${evento.id}"
                                class="fw-semibold text-decoration-none"
                                th:text="${evento.titulo}">
                             </a>
                         </td>
-                        <td data-label="Inicio" th:text="${#temporals.format(evento.fechaInicio, 'dd MMM yyyy, HH:mm')}"></td>
+                        <td data-label="Inicio"
+                            th:text="${#temporals.format(evento.fechaInicio, 'dd MMM yyyy, HH:mm')}"></td>
                         <td data-label="Lugar" th:text="${evento.lugar}"></td>
                         <td data-label="Cupo">
                             <span th:text="${evento.inscritosActuales}"></span> /
@@ -176,7 +230,94 @@
 <script src="/js/confirmaciones.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+
         inicializarPaginacion('tablaEventosOrg', 7);
+
+        const $ = id => document.getElementById(id);
+
+        const tabla       = $('tablaEventosOrg');
+        const filBusqueda = $('filtroBusqueda');
+        const filTipo     = $('filtroTipo');
+        const filEstado   = $('filtroEstado');
+        const filDesde    = $('filtroDesde');
+        const filHasta    = $('filtroHasta');
+        const btnLimpiar  = $('btnLimpiarFiltros');
+        const spanFilt    = $('conteoFiltrados');
+        const spanTotal   = $('conteoTotal');
+
+        if (!tabla) return;
+
+        const filas = [...tabla.querySelectorAll('tbody tr[data-paginar]')];
+
+        spanTotal.textContent = filas.length;
+
+        function filtrar() {
+
+            const busq   = filBusqueda.value.toLowerCase().trim();
+            const tipo   = filTipo.value.toUpperCase();
+            const estado = filEstado.value.toUpperCase();
+            const desde  = filDesde.value ? new Date(filDesde.value) : null;
+            const hasta  = filHasta.value ? new Date(filHasta.value) : null;
+
+            if (hasta) hasta.setHours(23,59,59);
+
+            let visibles = 0;
+
+            filas.forEach(fila => {
+
+                const titulo = fila.dataset.titulo.toLowerCase();
+                const lugar  = fila.dataset.lugar.toLowerCase();
+                const tipoEv = fila.dataset.tipo;
+                const estadoEv = fila.dataset.estado;
+                const fechaEv  = new Date(fila.dataset.fecha);
+
+                let ok = true;
+
+                if (busq && !titulo.includes(busq) && !lugar.includes(busq))
+                    ok = false;
+
+                if (tipo && tipoEv !== tipo)
+                    ok = false;
+
+                if (estado && estadoEv !== estado)
+                    ok = false;
+
+                if (desde && fechaEv < desde)
+                    ok = false;
+
+                if (hasta && fechaEv > hasta)
+                    ok = false;
+
+                fila.style.display = ok ? '' : 'none';
+
+                if (ok) visibles++;
+
+            });
+
+            spanFilt.textContent = visibles;
+
+            const hayFiltro = busq || tipo || estado || filDesde.value || filHasta.value;
+
+            btnLimpiar.style.display = hayFiltro ? '' : 'none';
+
+            reiniciarPaginacion('tablaEventosOrg', 7);
+        }
+
+        btnLimpiar.addEventListener('click', () => {
+
+            filBusqueda.value = '';
+            filTipo.value = '';
+            filEstado.value = '';
+            filDesde.value = '';
+            filHasta.value = '';
+
+            filtrar();
+        });
+
+        [filBusqueda, filTipo, filEstado, filDesde, filHasta]
+            .forEach(el => el.addEventListener('input', filtrar));
+
+        filtrar();
     });
 </script>
 </body>
