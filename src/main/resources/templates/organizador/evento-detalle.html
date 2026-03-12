@@ -98,13 +98,16 @@
                         </button>
                     </form>
 
-                    <form th:unless="${evento.estado.name() == 'CANCELADO'}"
+                    <form th:if="${!evento.estaEnCurso() and !evento.haTerminado() and evento.estado.name() != 'CANCELADO'}"
                           th:action="'/organizador/eventos/' + ${evento.id} + '/cancelar'"
-                          method="post" class="d-inline confirm-form"
+                          method="post"
+                          class="d-inline confirm-form"
                           th:data-mensaje="'¿Cancelar el evento ' + ${evento.titulo} + '?'">
+
                         <button class="btn btn-outline-danger">
                             <i class="bi bi-x-lg"></i> Cancelar
                         </button>
+
                     </form>
                 </div>
             </div>

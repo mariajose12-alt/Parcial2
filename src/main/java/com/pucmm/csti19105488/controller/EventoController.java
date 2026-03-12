@@ -216,8 +216,33 @@ public class EventoController {
 
         // Cancelar evento
         post("/organizador/eventos/{id}/cancelar", ctx -> {
-            if (!UsuarioController.esOrganizador(ctx) && !UsuarioController.esAdmin(ctx)) { ctx.redirect("/login"); return; }
-            eventoService.cancelarEvento(Long.parseLong(ctx.pathParam("id")));
+
+            if (!UsuarioController.esOrganizador(ctx) && !UsuarioController.esAdmin(ctx)) {
+                ctx.redirect("/login");
+                return;
+            }
+
+            Long id = Long.parseLong(ctx.pathParam("id"));
+            Evento evento = eventoService.buscarPorId(id);
+
+            if (evento == null) {
+                ctx.status(404).result("Evento no encontrado");
+                return;
+            }
+
+            // Validación de estado
+            if (evento.estaEnCurso()) {
+                ctx.status(400).result("No se puede cancelar un evento que ya comenzó");
+                return;
+            }
+
+            if (evento.haTerminado()) {
+                ctx.status(400).result("No se puede cancelar un evento finalizado");
+                return;
+            }
+
+            eventoService.cancelarEvento(id);
+
             ctx.redirect("/organizador/eventos");
         });
 

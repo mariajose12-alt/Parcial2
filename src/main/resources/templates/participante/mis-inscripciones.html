@@ -122,7 +122,9 @@
                         <button th:if="${!registro.evento.haTerminado()}"
                                 class="btn btn-outline-danger btn-sm w-100 btn-cancelar"
                                 th:data-evento-id="${registro.evento.id}"
-                                th:data-registro-id="${registro.id}">
+                                th:data-registro-id="${registro.id}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalConfirmarCancelacion">
                             <i class="bi bi-x-circle"></i> Cancelar inscripción
                         </button>
 
@@ -150,28 +152,87 @@
 
 </div>
 
+<div class="modal fade" id="modalConfirmarCancelacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Confirmar cancelación
+                </h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                ¿Seguro que deseas cancelar esta inscripción?
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    No
+                </button>
+
+                <button id="btnConfirmarCancelacion"
+                        class="btn btn-danger">
+                    Sí, cancelar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    let botonCancelarActual = null;
+
     function mostrarToast(mensaje, exito) {
         const toast = document.getElementById('toastFeedback');
         toast.classList.remove('bg-success', 'bg-danger');
         toast.classList.add(exito ? 'bg-success' : 'bg-danger');
+
         document.getElementById('toastMensaje').textContent = mensaje;
+
         new bootstrap.Toast(toast, { delay: 3500 }).show();
     }
 
+    // Detectar botón cancelar y guardar referencia
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-cancelar');
         if (!btn) return;
-        cancelarInscripcion(btn.dataset.eventoId, btn.dataset.registroId, btn);
+
+        botonCancelarActual = btn;
     });
 
+    // Confirmación desde el modal
+    document
+        .getElementById("btnConfirmarCancelacion")
+        .addEventListener("click", function () {
+
+            if (!botonCancelarActual) return;
+
+            const eventoId   = botonCancelarActual.dataset.eventoId;
+            const registroId = botonCancelarActual.dataset.registroId;
+
+            cancelarInscripcion(eventoId, registroId, botonCancelarActual);
+
+            const modal = bootstrap.Modal.getInstance(
+                document.getElementById("modalConfirmarCancelacion")
+            );
+
+            modal.hide();
+        });
+
+
     function cancelarInscripcion(eventoId, registroId, btn) {
-        if (!confirm('¿Seguro que deseas cancelar esta inscripción?')) return;
 
         btn.disabled = true;
+
         btn.innerHTML =
             '<span class="spinner-border spinner-border-sm me-1"></span> Cancelando...';
 
@@ -180,25 +241,40 @@
             credentials: 'same-origin'
         })
             .then(async res => {
+
                 const data = await res.json();
+
                 if (res.ok) {
+
                     mostrarToast(data.mensaje || 'Inscripción cancelada', true);
+
                     const card = document.getElementById('card-' + registroId);
+
                     if (card) {
+
                         card.style.transition = 'opacity 0.4s';
-                        card.style.opacity    = '0';
+                        card.style.opacity = '0';
+
                         setTimeout(() => card.remove(), 400);
                     }
+
                 } else {
+
                     mostrarToast(data.error || 'Error al cancelar', false);
+
                     btn.disabled = false;
+
                     btn.innerHTML =
                         '<i class="bi bi-x-circle"></i> Cancelar inscripción';
                 }
+
             })
             .catch(() => {
+
                 mostrarToast('Error de conexión', false);
+
                 btn.disabled = false;
+
                 btn.innerHTML =
                     '<i class="bi bi-x-circle"></i> Cancelar inscripción';
             });

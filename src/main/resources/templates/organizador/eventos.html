@@ -32,6 +32,83 @@
         </a>
     </div>
 
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-3" id="filtrosCard">
+        <div class="card-body py-3">
+            <div class="row g-2 align-items-end">
+
+                <!-- Búsqueda libre -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold small text-muted mb-1">
+                        <i class="bi bi-search"></i> Buscar
+                    </label>
+                    <input type="text"
+                           id="filtroBusqueda"
+                           class="form-control form-control-sm"
+                           placeholder="Título o lugar…">
+                </div>
+
+                <!-- Tipo -->
+                <div class="col-6 col-md-2">
+                    <label class="form-label fw-semibold small text-muted mb-1">
+                        <i class="bi bi-tag"></i> Tipo
+                    </label>
+                    <select id="filtroTipo" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        <option value="Charla">Charla</option>
+                        <option value="Taller">Taller</option>
+                        <option value="Seminario">Seminario</option>
+                        <option value="Congreso">Congreso</option>
+                    </select>
+                </div>
+
+                <!-- Estado -->
+                <div class="col-6 col-md-2">
+                    <label class="form-label fw-semibold small text-muted mb-1">
+                        <i class="bi bi-circle-half"></i> Estado
+                    </label>
+                    <select id="filtroEstado" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        <option value="Publicado">Publicado</option>
+                        <option value="Borrador">Borrador</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <!-- Desde -->
+                <div class="col-6 col-md-2">
+                    <label class="form-label fw-semibold small text-muted mb-1">
+                        <i class="bi bi-calendar-event"></i> Desde
+                    </label>
+                    <input type="date" id="filtroDesde" class="form-control form-control-sm">
+                </div>
+
+                <!-- Hasta -->
+                <div class="col-6 col-md-2">
+                    <label class="form-label fw-semibold small text-muted mb-1">
+                        <i class="bi bi-calendar-check"></i> Hasta
+                    </label>
+                    <input type="date" id="filtroHasta" class="form-control form-control-sm">
+                </div>
+
+            </div>
+
+            <!-- Conteo + limpiar -->
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <small class="text-muted">
+                    Mostrando <span id="conteoFiltrados" class="fw-semibold text-dark">–</span>
+                    de <span id="conteoTotal" class="fw-semibold text-dark">–</span> evento(s)
+                </small>
+                <button id="btnLimpiarFiltros"
+                        class="btn btn-link btn-sm text-secondary p-0"
+                        style="display:none">
+                    <i class="bi bi-x-circle"></i> Limpiar filtros
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <div th:if="${not #lists.isEmpty(eventos)}" class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -153,13 +230,22 @@
                                 <form th:action="'/organizador/eventos/' + ${evento.id} + '/cancelar'"
                                       method="post">
 
+                                    <!-- Se puede cancelar -->
                                     <button type="button"
+                                            th:if="${!evento.estaEnCurso() and !evento.haTerminado()}"
                                             class="btn btn-outline-danger btn-sm"
                                             title="Cancelar evento"
-                                            data-confirm="¿Cancelar el evento [[${evento.titulo}]]?">
+                                            th:data-confirm="'¿Cancelar el evento ' + ${evento.titulo} + '?'">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
 
+                                    <!-- No se puede cancelar -->
+                                    <button th:unless="${!evento.estaEnCurso() and !evento.haTerminado() and evento.estado.name() != 'CANCELADO'}"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            disabled
+                                            title="No se puede cancelar un evento en curso o finalizado">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
                                 </form>
                             </div>
                         </td>
@@ -210,13 +296,96 @@
 <script src="/js/confirmaciones.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        inicializarPaginacion('tablaEventosOrg', 7);
-    });
 
-    document.querySelectorAll('.confirm-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const msg = this.dataset.mensaje || '¿Confirmar acción?';
-            if (!confirm(msg)) e.preventDefault();
+        // 1) Paginación inicial
+        inicializarPaginacion('tablaEventosOrg', 7);
+
+        // 2) Filtros
+        const $ = id => document.getElementById(id);
+
+        function parseFecha(celda) {
+            const txt = celda?.textContent?.trim() ?? '';
+            const meses = {
+                ene:0,feb:1,mar:2,abr:3,may:4,jun:5,
+                jul:6,ago:7,sep:8,oct:9,nov:10,dic:11
+            };
+            const m = txt.match(/(\d{1,2})\s+([a-záéíóú]{3})\s+(\d{4})/i);
+            if (!m) return null;
+            return new Date(+m[3], meses[m[2].toLowerCase()], +m[1]);
+        }
+
+        const tabla       = $('tablaEventosOrg');
+        const filBusqueda = $('filtroBusqueda');
+        const filTipo     = $('filtroTipo');
+        const filEstado   = $('filtroEstado');
+        const filDesde    = $('filtroDesde');
+        const filHasta    = $('filtroHasta');
+        const btnLimpiar  = $('btnLimpiarFiltros');
+        const spanFilt    = $('conteoFiltrados');
+        const spanTotal   = $('conteoTotal');
+
+        if (!tabla) return;
+
+        const todasLasFilas = [...tabla.querySelectorAll('tbody tr[data-paginar]')];
+        spanTotal.textContent = todasLasFilas.length;
+
+        function filtrar() {
+            const busq   = filBusqueda.value.trim().toLowerCase();
+            const tipo   = filTipo.value;
+            const estado = filEstado.value;
+            const desde  = filDesde.value ? new Date(filDesde.value) : null;
+            const hasta  = filHasta.value ? new Date(filHasta.value) : null;
+            if (hasta) hasta.setHours(23, 59, 59);
+
+            let visibles = 0;
+
+            todasLasFilas.forEach(fila => {
+                const celdas  = fila.querySelectorAll('td');
+                const titulo  = celdas[0]?.textContent?.toLowerCase() ?? '';
+                const tipoTx  = celdas[1]?.textContent?.trim() ?? '';
+                const fechaIn = parseFecha(celdas[2]);
+                const lugarTx = celdas[4]?.textContent?.toLowerCase() ?? '';
+                const estadoT = celdas[6]?.textContent?.trim() ?? '';
+
+                let ok = true;
+                if (busq   && !titulo.includes(busq) && !lugarTx.includes(busq)) ok = false;
+                if (tipo   && tipoTx !== tipo)   ok = false;
+                if (estado && estadoT !== estado) ok = false;
+                if (desde  && fechaIn && fechaIn < desde) ok = false;
+                if (hasta  && fechaIn && fechaIn > hasta) ok = false;
+
+                fila.style.display = ok ? '' : 'none';
+                if (ok) visibles++;
+            });
+
+            spanFilt.textContent = visibles;
+
+            const hayFiltro = busq || tipo || estado || filDesde.value || filHasta.value;
+            btnLimpiar.style.display = hayFiltro ? '' : 'none';
+
+            reiniciarPaginacion('tablaEventosOrg', 7);
+        }
+
+        btnLimpiar.addEventListener('click', () => {
+            filBusqueda.value = '';
+            filTipo.value     = '';
+            filEstado.value   = '';
+            filDesde.value    = '';
+            filHasta.value    = '';
+            filtrar();
+        });
+
+        [filBusqueda, filTipo, filEstado, filDesde, filHasta]
+            .forEach(el => el.addEventListener('input', filtrar));
+
+        filtrar();
+
+        // 3) Confirmaciones
+        document.querySelectorAll('.confirm-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const msg = this.dataset.mensaje || '¿Confirmar acción?';
+                if (!confirm(msg)) e.preventDefault();
+            });
         });
     });
 </script>

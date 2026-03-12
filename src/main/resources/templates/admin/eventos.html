@@ -46,26 +46,26 @@
                     </thead>
                     <tbody>
                     <tr th:each="evento : ${eventos}" data-paginar="true">
-                        <td class="ps-4">
+                        <td class="ps-4" data-label="Titulo">
                             <a th:href="'/organizador/eventos/' + ${evento.id}"
                                class="fw-semibold text-decoration-none"
                                th:text="${evento.titulo}">
                             </a>
                         </td>
-                        <td th:text="${#temporals.format(evento.fechaInicio, 'dd MMM yyyy, HH:mm')}"></td>
-                        <td th:text="${evento.lugar}"></td>
-                        <td>
+                        <td data-label="Inicio" th:text="${#temporals.format(evento.fechaInicio, 'dd MMM yyyy, HH:mm')}"></td>
+                        <td data-label="Lugar" th:text="${evento.lugar}"></td>
+                        <td data-label="Cupo">
                             <span th:text="${evento.inscritosActuales}"></span> /
                             <span th:text="${evento.capacidadMax}"></span>
                         </td>
-                        <td>
+                        <td data-label="Estado">
                             <span th:switch="${evento.estado.name()}">
                                 <span th:case="'PUBLICADO'" class="badge bg-success">Publicado</span>
                                 <span th:case="'BORRADOR'" class="badge bg-secondary">Borrador</span>
                                 <span th:case="'CANCELADO'" class="badge bg-danger">Cancelado</span>
                             </span>
                         </td>
-                        <td class="pe-4">
+                        <td class="pe-4" data-label="Acciones">
                             <div class="d-flex align-items-center gap-2">
                                 <!-- Grupo principal -->
                                 <div class="btn-group btn-group-sm">
@@ -111,13 +111,22 @@
                                 <form th:action="'/organizador/eventos/' + ${evento.id} + '/cancelar'"
                                       method="post">
 
+                                    <!-- Se puede cancelar -->
                                     <button type="button"
+                                            th:if="${!evento.estaEnCurso() and !evento.haTerminado()}"
                                             class="btn btn-outline-danger btn-sm"
                                             title="Cancelar evento"
-                                            th:attr="data-confirm='¿Cancelar el evento ' + ${evento.titulo} + '?'">
+                                            th:data-confirm="'¿Cancelar el evento ' + ${evento.titulo} + '?'">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
 
+                                    <!-- No se puede cancelar -->
+                                    <button th:unless="${!evento.estaEnCurso() and !evento.haTerminado() and evento.estado.name() != 'CANCELADO'}"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            disabled
+                                            title="No se puede cancelar un evento en curso o finalizado">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
                                 </form>
                             </div>
                         </td>

@@ -45,4 +45,19 @@ public class CodigoQRDAO {
             em.close();
         }
     }
+
+    public void eliminarPorRegistro(Long id) {
+        EntityManager em = HibernateUtil.getEntityManagerFactory().createEntityManager();
+        try {
+            em.getTransaction().begin();
+
+            em.createQuery("DELETE FROM CodigoQR q WHERE q.registro.id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+
+            em.getTransaction().commit();
+        } finally {
+            em.close();
+        }
+    }
 }

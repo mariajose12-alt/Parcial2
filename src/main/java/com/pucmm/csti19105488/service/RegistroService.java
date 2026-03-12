@@ -68,6 +68,7 @@ public class RegistroService {
 
         if (registro == null) return "No estás inscrito en este evento";
 
+        codigoQRDAO.eliminarPorRegistro(registro.getId());
         registroDAO.eliminar(registro.getId());
         evento.setInscritosActuales(evento.getInscritosActuales() - 1);
         eventoDAO.actualizar(evento);
