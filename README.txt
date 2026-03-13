@@ -102,7 +102,7 @@ Este usuario no puede ser eliminado ni bloqueado desde el sistema.
 
 ## 7. Roles del Sistema
 
-    - Administrador – Gestiona usuarios, asigna roles, elimina eventos, accede a todo
+    - Administrador – Gestiona usuarios, asigna roles, elimina eventos, accede al programa completo
     - Organizador – Crea, edita, publica y cancela sus eventos, escanea QR de asistencia
     - Participante – Ve eventos publicados, se inscribe, cancela inscripción, presenta QR
 
