@@ -110,8 +110,18 @@
                                 QR no disponible
                             </p>
                         </div>
+                        <!-- Token manual -->
+                        <div class="mt-2">
+                            <p class="small text-muted mb-1">
+                                <i class="bi bi-key"></i> Código manual de verificación
+                            </p>
+                            <div class="alert alert-light py-2 px-3 small text-center fw-semibold"
+                                 th:text="${registro.qrtoken}">
+                            </div>
+                        </div>
+
                         <p class="small text-muted mt-1">
-                            Presenta este QR el día del evento
+                            Presenta este QR o el código manual el día del evento
                         </p>
                     </div>
 
