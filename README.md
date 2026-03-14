@@ -110,24 +110,25 @@ Este usuario no puede ser eliminado ni bloqueado desde el sistema.
 
 ### Vistas
 
-GET /login                            – Pantalla de inicio de sesión
-GET /registro                         – Registro de nuevo participante
-GET /eventos                          – Lista pública de eventos
-GET /mis-inscripciones                – Inscripciones del participante con QR
-GET /organizador/eventos              – Panel del organizador
-GET /organizador/eventos/{id}/scanner – Escáner QR de asistencia
-GET /organizador/eventos/{id}/resumen – Estadísticas del evento
-GET /dashboard                        – Dashboard con gráficos y filtros
-GET /admin/usuarios                   – Gestión de usuarios (admin)
-GET /admin/eventos                    – Gestión de todos los eventos (admin)
+- `GET /login`                            – Pantalla de inicio de sesión
+- `GET /registro`                         – Registro de nuevo participante
+- `GET /eventos`                          – Lista pública de eventos
+- `GET /mis-inscripciones`                – Inscripciones del participante con QR
+- `GET /organizador/eventos`              – Panel del organizador
+- `GET /organizador/eventos/{id}/scanner` – Escáner QR de asistencia
+- `GET /organizador/eventos/{id}/resumen` – Estadísticas del evento
+- `GET /dashboard`                        – Dashboard con gráficos y filtros
+- `GET /admin/usuarios`                   – Gestión de usuarios (admin)
+- `GET /admin/eventos`                    – Gestión de todos los eventos (admin)
 
 ### API REST
 
-POST /api/eventos/{id}/inscribir            – Inscribirse a un evento
-POST /api/eventos/{id}/cancelar-inscripcion – Cancelar inscripción
-POST /api/asistencia/validar                – Validar QR y marcar asistencia
-GET  /api/eventos/{id}/resumen              – Estadísticas del evento (JSON)
-GET  /api/dashboard/estadisticas            – Estadísticas del dashboard (JSON)
+- `POST /api/eventos/{id}/inscribir`            – Inscribirse a un evento
+- `POST /api/eventos/{id}/cancelar-inscripcion` – Cancelar inscripción
+- `POST /api/asistencia/validar`                – Validar QR y marcar asistencia
+- `GET /api/eventos/{id}/resumen`               – Estadísticas del evento (JSON)
+- `GET /api/dashboard/estadisticas`             – Estadísticas del dashboard (JSON)
+
 
 ## 9. Generación de Código QR
 
