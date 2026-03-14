@@ -50,7 +50,7 @@ public class Main {
                 new RegistroController().registrarRutas();
                 get("/", ctx -> ctx.redirect("/login"));
             });
-        }).start("0.0.0.0",7000);
+        }).start(7000);
 
         // Cerrar el programa al apagar
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
