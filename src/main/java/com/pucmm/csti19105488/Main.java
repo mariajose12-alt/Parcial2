@@ -50,9 +50,9 @@ public class Main {
                 new RegistroController().registrarRutas();
                 get("/", ctx -> ctx.redirect("/login"));
             });
-        }).start(7000);
+        }).start("0.0.0.0",7000);
 
-        // Cerrar todo al apagar
+        // Cerrar el programa al apagar
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             HibernateUtil.close();
             h2Server.stop();
